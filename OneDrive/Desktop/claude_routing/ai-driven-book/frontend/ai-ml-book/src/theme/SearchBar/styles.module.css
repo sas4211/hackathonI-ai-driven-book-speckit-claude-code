@@ -1,0 +1,147 @@
+/* SearchBar styles */
+.searchBar {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.searchBarInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 16px;
+  padding-left: 44px;
+  border: 2px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 8px;
+  font-size: 16px;
+  line-height: 1.5;
+  background-color: var(--ifm-background-color, #fff);
+  color: var(--ifm-text-color, #333);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--ifm-color-emphasis-600, #999);
+  font-style: italic;
+}
+
+.searchInput:focus {
+  border-color: var(--ifm-color-primary, #2563eb);
+  box-shadow: 0 0 0 3px var(--ifm-color-primary-100, rgba(37, 99, 235, 0.15));
+  background-color: var(--ifm-background-color, #fff);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  width: 20px;
+  height: 20px;
+  color: var(--ifm-color-emphasis-600, #666);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.clearButton {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--ifm-color-emphasis-600, #666);
+  transition: all 0.2s ease-in-out;
+}
+
+.clearButton:hover {
+  background-color: var(--ifm-color-emphasis-200, #f3f4f6);
+  color: var(--ifm-color-emphasis-800, #333);
+}
+
+.clearButton:focus {
+  outline: 2px solid var(--ifm-color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+/* Dark mode support */
+html[data-theme='dark'] .searchInput {
+  background-color: var(--ifm-background-color, #111827);
+  border-color: var(--ifm-toc-border-color, #374151);
+  color: var(--ifm-text-color, #e5e7eb);
+}
+
+html[data-theme='dark'] .searchInput::placeholder {
+  color: var(--ifm-color-emphasis-500, #9ca3af);
+}
+
+html[data-theme='dark'] .searchInput:focus {
+  border-color: var(--ifm-color-primary, #60a5fa);
+  box-shadow: 0 0 0 3px var(--ifm-color-primary-900, rgba(59, 130, 246, 0.2));
+  background-color: var(--ifm-background-color, #111827);
+}
+
+html[data-theme='dark'] .searchIcon {
+  color: var(--ifm-color-emphasis-500, #9ca3af);
+}
+
+html[data-theme='dark'] .clearButton:hover {
+  background-color: var(--ifm-color-emphasis-800, #1f2937);
+  color: var(--ifm-color-emphasis-200, #e5e7eb);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .searchBar {
+    max-width: 100%;
+  }
+
+  .searchInput {
+    padding: 10px 14px;
+    padding-left: 40px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .searchIcon {
+    left: 10px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .clearButton {
+    right: 6px;
+    padding: 3px;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .searchInput,
+  .clearButton {
+    transition: none;
+  }
+}
+
+/* Focus visible support for better accessibility */
+.searchInput:focus-visible {
+  outline: 2px solid var(--ifm-color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .searchInput {
+    border-width: 3px;
+  }
+
+  .searchInput:focus {
+    box-shadow: none;
+  }
+}

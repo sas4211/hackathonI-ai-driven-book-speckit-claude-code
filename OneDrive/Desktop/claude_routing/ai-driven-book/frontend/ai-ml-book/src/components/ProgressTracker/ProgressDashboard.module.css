@@ -1,0 +1,473 @@
+/* ProgressDashboard styles */
+.progressDashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.errorMessage {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.closeError {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #991b1b;
+  padding: 0 0.5rem;
+}
+
+.savingIndicator {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  margin-left: 1rem;
+  border: 1px solid #bfdbfe;
+}
+
+.progressRing {
+  width: 100%;
+  height: 8px;
+  background-color: var(--ifm-color-emphasis-200, #e5e7eb);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.dashboardHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.dashboardHeader h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--ifm-heading-color, var(--ifm-title-color, var(--ifm-text-color)));
+}
+
+.dashboardHeader p {
+  color: var(--ifm-color-emphasis-700, #666);
+  font-size: 1.1rem;
+}
+
+.overviewCards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: var(--ifm-background-surface-color, #fff);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cardIcon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cardContent h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.cardContent p {
+  margin: 0.25rem 0 0 0;
+  color: var(--ifm-color-emphasis-600, #666);
+  font-size: 0.9rem;
+}
+
+.chapterProgress,
+.quizProgress {
+  background: var(--ifm-background-surface-color, #fff);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chapterProgress h3,
+.quizProgress h3 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-heading-color, var(--ifm-title-color, var(--ifm-text-color)));
+}
+
+.chapterList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chapterItem {
+  padding: 1rem;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  background: var(--ifm-background-color, #f9fafb);
+}
+
+.chapterItem.completed {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+}
+
+.chapterInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.chapterName {
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.chapterStatus {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: var(--ifm-color-emphasis-200, #e5e7eb);
+  color: var(--ifm-color-emphasis-700, #6b7280);
+}
+
+.chapterStatus.completed {
+  background: #dcfce7;
+  color: #065f46;
+}
+
+.chapterProgress {
+  background-color: var(--ifm-color-emphasis-200, #e5e7eb);
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+  border-radius: 999px;
+}
+
+.progressFill.completed {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.chapterTime {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-600, #666);
+}
+
+.quizGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.quizCard {
+  background: var(--ifm-background-color, #f9fafb);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.quizCard h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.quizScore {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.scoreValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.quizProgress {
+  background-color: var(--ifm-color-emphasis-200, #e5e7eb);
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.noData {
+  text-align: center;
+  color: var(--ifm-color-emphasis-600, #666);
+  font-style: italic;
+  padding: 2rem;
+}
+
+.dashboardActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.exportButton,
+.shareButton,
+.resetButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.exportButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.shareButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.resetButton {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.exportButton:hover,
+.importButton:hover,
+.shareButton:hover,
+.resetButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+.importButton {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.exportButton,
+.importButton,
+.shareButton,
+.resetButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.lastActivity {
+  text-align: center;
+  color: var(--ifm-color-emphasis-600, #666);
+  font-style: italic;
+  padding: 1rem;
+  background: var(--ifm-background-surface-color, #fff);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background-color: var(--ifm-background-surface-color, #111827);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .cardContent h3 {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .cardContent p {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .chapterItem {
+    background-color: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .chapterName {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .chapterStatus {
+    background: var(--ifm-color-emphasis-800, #1f2937);
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .chapterTime {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .quizCard {
+    background-color: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .quizCard h4 {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .scoreValue {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .lastActivity {
+    background-color: var(--ifm-background-surface-color, #111827);
+    border-color: var(--ifm-toc-border-color, #374151);
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .overviewCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .progressDashboard {
+    padding: 1rem;
+  }
+
+  .dashboardHeader h2 {
+    font-size: 1.5rem;
+  }
+
+  .overviewCards {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .cardIcon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+
+  .cardContent h3 {
+    font-size: 1.5rem;
+  }
+
+  .chapterProgress,
+  .quizProgress {
+    padding: 1rem;
+  }
+
+  .quizGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardActions {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Animation for progress fill */
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--target-width, 0);
+  }
+}
+
+.progressFill {
+  animation: progressFill 0.5s ease-out;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .exportButton,
+  .shareButton,
+  .resetButton {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .exportButton:hover,
+  .shareButton:hover,
+  .resetButton:hover {
+    transform: none;
+  }
+
+  .progressFill {
+    animation: none;
+  }
+}
+
+/* Focus visible support */
+.exportButton:focus-visible,
+.shareButton:focus-visible,
+.resetButton:focus-visible {
+  outline: 2px solid var(--ifm-color-primary, #667eea);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card {
+    border-width: 2px;
+  }
+
+  .progressFill {
+    border: 2px solid var(--ifm-color-primary, #667eea);
+    box-shadow: none;
+  }
+
+  .exportButton,
+  .shareButton,
+  .resetButton {
+    border: 2px solid white;
+    box-shadow: none;
+  }
+}

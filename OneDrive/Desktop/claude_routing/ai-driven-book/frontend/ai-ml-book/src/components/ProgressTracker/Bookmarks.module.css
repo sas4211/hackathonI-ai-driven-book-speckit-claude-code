@@ -1,0 +1,457 @@
+/* Bookmarks Component Styles */
+
+.bookmarks {
+  background: var(--ifm-background-surface-color, #fff);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bookmarksHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+}
+
+.bookmarksHeader h3 {
+  margin: 0;
+  color: var(--ifm-heading-color, var(--ifm-title-color, var(--ifm-text-color)));
+}
+
+.addButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.addButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Bookmark Form Styles */
+.bookmarkForm {
+  background: var(--ifm-background-color, #f9fafb);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bookmarkForm h4 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700, #666);
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  background: white;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.checkboxLabel input {
+  width: auto;
+  cursor: pointer;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.saveButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.saveButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.cancelButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Bookmarks List Styles */
+.bookmarksList h4,
+.notesList h4 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+  font-size: 1.1rem;
+}
+
+.noBookmarks,
+.noNotes {
+  text-align: center;
+  color: var(--ifm-color-emphasis-600, #666);
+  font-style: italic;
+  padding: 2rem;
+  background: var(--ifm-background-color, #f9fafb);
+  border-radius: 12px;
+  border: 1px dashed var(--ifm-toc-border-color, #e5e5e5);
+}
+
+.bookmarkItem {
+  background: white;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.bookmarkItem:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.bookmarkHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.bookmarkTitle h5 {
+  margin: 0 0 0.25rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+  font-size: 1rem;
+}
+
+.bookmarkChapter {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600, #666);
+  background: var(--ifm-background-color, #f9fafb);
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.bookmarkActions {
+  display: flex;
+  gap: 8px;
+}
+
+.editButton,
+.deleteButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.editButton:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.deleteButton:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.bookmarkContent {
+  margin-bottom: 0.75rem;
+}
+
+.bookmarkContent p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-800, #4b5563);
+  line-height: 1.5;
+}
+
+.bookmarkMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #bfdbfe;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600, #666);
+}
+
+.publicBadge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* Notes List Styles */
+.noteItem {
+  background: white;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.noteItem:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.noteHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.notePath {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600, #666);
+  background: var(--ifm-background-color, #f9fafb);
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.noteContent p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-800, #4b5563);
+  line-height: 1.5;
+}
+
+.noteEdit {
+  margin-bottom: 0.75rem;
+}
+
+.noteEdit textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.noteEdit .noteActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Add Note Form */
+.addNoteForm {
+  background: var(--ifm-background-color, #f9fafb);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.addNoteForm h5 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .bookmarkHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .bookmarkMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .noteHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .bookmarkForm {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .bookmarkForm h4 {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .formGroup label {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea {
+    background: var(--ifm-background-surface-color, #111827);
+    border-color: var(--ifm-toc-border-color, #374151);
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .formGroup input:focus,
+  .formGroup select:focus,
+  .formGroup textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+
+  .bookmarkItem,
+  .noteItem {
+    background: var(--ifm-background-surface-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .bookmarkTitle h5,
+  .bookmarkContent p,
+  .noteContent p {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .bookmarkChapter,
+  .bookmarkPath {
+    background: var(--ifm-background-color, #1f2937);
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .bookmarkMeta .timestamp {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .noBookmarks,
+  .noNotes {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .addNoteForm {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .addNoteForm h5 {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .bookmarkItem,
+  .noteItem {
+    border-width: 2px;
+  }
+
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea {
+    border-width: 2px;
+  }
+
+  .tags .tag {
+    border-width: 2px;
+  }
+}

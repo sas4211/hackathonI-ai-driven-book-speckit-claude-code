@@ -1,0 +1,676 @@
+---
+sidebar_position: 6
+---
+
+# Practical Exercise: Complete Data Preprocessing Pipeline
+
+Welcome to the hands-on section! In this comprehensive exercise, you'll build a complete data preprocessing pipeline from scratch using a real-world dataset. This will help you apply all the concepts you've learned in this chapter.
+
+## Exercise Overview
+
+**Objective**: Build a preprocessing pipeline for a customer churn prediction dataset.
+
+**Dataset**: We'll use a synthetic telecommunications customer dataset with various data quality issues.
+
+**What you'll accomplish**:
+1. Load and explore the dataset
+2. Clean data quality issues
+3. Engineer meaningful features
+4. Handle missing data strategically
+5. Normalize features appropriately
+6. Create a reusable preprocessing pipeline
+
+## Step 1: Load and Explore the Dataset
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
+from sklearn.impute import KNNImputer
+
+# Set random seed for reproducibility
+np.random.seed(42)
+
+# Create synthetic customer churn dataset
+n_customers = 1000
+
+# Generate features with realistic patterns and some quality issues
+data = {
+    'customer_id': range(1, n_customers + 1),
+    'age': np.random.normal(40, 12, n_customers),
+    'income': np.random.lognormal(10, 0.8, n_customers),
+    'tenure_months': np.random.exponential(24, n_customers),
+    'monthly_charges': np.random.normal(65, 15, n_customers),
+    'contract_length': np.random.choice(['Monthly', '1-Year', '2-Year'], n_customers, p=[0.5, 0.3, 0.2]),
+    'internet_type': np.random.choice(['Fiber', 'DSL', 'None'], n_customers, p=[0.4, 0.4, 0.2]),
+    'support_calls': np.random.poisson(2, n_customers),
+    'data_usage_gb': np.random.gamma(2, 20, n_customers),
+    'satisfaction_score': np.random.normal(3.5, 1.2, n_customers)
+}
+
+df = pd.DataFrame(data)
+
+# Add realistic missing values and data quality issues
+# Missing age for 5% of customers
+missing_age_idx = np.random.choice(n_customers, size=int(0.05 * n_customers), replace=False)
+df.loc[missing_age_idx, 'age'] = np.nan
+
+# Missing income for customers with high tenure (MNAR pattern)
+high_tenure_idx = df[df['tenure_months'] > 60].index
+missing_income_idx = np.random.choice(high_tenure_idx, size=int(0.1 * len(high_tenure_idx)), replace=False)
+df.loc[missing_income_idx, 'income'] = np.nan
+
+# Missing satisfaction scores for customers with many support calls
+many_calls_idx = df[df['support_calls'] > 3].index
+missing_satisfaction_idx = np.random.choice(many_calls_idx, size=int(0.3 * len(many_calls_idx)), replace=False)
+df.loc[missing_satisfaction_idx, 'satisfaction_score'] = np.nan
+
+# Add some outliers
+df.loc[np.random.choice(n_customers, 10), 'monthly_charges'] *= 3
+df.loc[np.random.choice(n_customers, 5), 'data_usage_gb'] *= 5
+
+# Add some inconsistent data
+df.loc[np.random.choice(n_customers, 20), 'contract_length'] = '2 year'  # Inconsistent with '2-Year'
+df.loc[np.random.choice(n_customers, 15), 'internet_type'] = 'FIBER'  # Inconsistent case
+
+# Generate target variable (churn) based on features
+churn_prob = (
+    0.1 +  # Base probability
+    0.02 * (df['age'] < 30) +  # Younger customers more likely to churn
+    0.03 * (df['tenure_months'] < 6) +  # New customers more likely to churn
+    0.001 * df['monthly_charges'] +  # Higher charges increase churn
+    0.02 * (df['support_calls'] > 2) +  # Many support calls increase churn
+    -0.02 * (df['income'] > df['income'].quantile(0.75)) +  # Higher income decreases churn
+    -0.03 * (df['satisfaction_score'] < 3)  # Low satisfaction increases churn
+)
+
+df['churn'] = np.random.binomial(1, np.clip(churn_prob, 0, 1), n_customers)
+
+print(f"Dataset shape: {df.shape}")
+print(f"Churn rate: {df['churn'].mean():.2%}")
+print("\nFirst few rows:")
+print(df.head())
+```
+
+## Step 2: Initial Data Exploration
+
+```python
+# Basic information
+print("=== Dataset Overview ===")
+print(f"Rows: {len(df)}")
+print(f"Columns: {len(df.columns)}")
+print(f"Missing values: {df.isnull().sum().sum()}")
+
+# Data types and missing values
+print("\n=== Data Types and Missing Values ===")
+print(df.info())
+
+# Statistical summary
+print("\n=== Statistical Summary ===")
+print(df.describe())
+
+# Missing value patterns
+print("\n=== Missing Value Analysis ===")
+missing_analysis = pd.DataFrame({
+    'Missing Count': df.isnull().sum(),
+    'Missing Percentage': (df.isnull().sum() / len(df)) * 100
+})
+print(missing_analysis[missing_analysis['Missing Count'] > 0])
+
+# Visualize missing data
+plt.figure(figsize=(12, 8))
+
+# Missing data heatmap
+plt.subplot(2, 2, 1)
+sns.heatmap(df.isnull(), cbar=True, cmap='viridis')
+plt.title('Missing Data Pattern')
+
+# Missing data by column
+plt.subplot(2, 2, 2)
+missing_counts = df.isnull().sum()
+missing_counts[missing_counts > 0].plot(kind='bar')
+plt.title('Missing Values by Column')
+plt.xticks(rotation=45)
+
+# Churn distribution
+plt.subplot(2, 2, 3)
+df['churn'].value_counts().plot(kind='bar')
+plt.title('Churn Distribution')
+plt.xticks(ticks=[0, 1], labels=['No Churn', 'Churn'], rotation=0)
+
+# Churn rate by contract type
+plt.subplot(2, 2, 4)
+churn_by_contract = df.groupby('contract_length')['churn'].mean()
+churn_by_contract.plot(kind='bar')
+plt.title('Churn Rate by Contract Type')
+plt.xticks(rotation=45)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Step 3: Data Cleaning
+
+```python
+# Create a copy for preprocessing
+df_clean = df.copy()
+
+print("=== Data Cleaning ===")
+
+# 1. Fix inconsistent categorical values
+print("1. Fixing inconsistent categorical values...")
+
+# Fix contract_length inconsistencies
+df_clean['contract_length'] = df_clean['contract_length'].replace({'2 year': '2-Year'})
+print(f"Contract length values: {df_clean['contract_length'].unique()}")
+
+# Fix internet_type case inconsistencies
+df_clean['internet_type'] = df_clean['internet_type'].str.title()
+print(f"Internet type values: {df_clean['internet_type'].unique()}")
+
+# 2. Handle outliers in numerical columns
+print("\n2. Handling outliers...")
+
+def detect_outliers_iqr(df, column):
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    return df[(df[column] < lower_bound) | (df[column] > upper_bound)]
+
+# Check outliers in key numerical columns
+for col in ['monthly_charges', 'data_usage_gb']:
+    outliers = detect_outliers_iqr(df_clean, col)
+    print(f"{col}: {len(outliers)} outliers detected")
+
+    # Cap outliers instead of removing them
+    Q1 = df_clean[col].quantile(0.25)
+    Q3 = df_clean[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    df_clean[col] = np.clip(df_clean[col], lower_bound, upper_bound)
+    print(f"{col}: Capped at [{lower_bound:.2f}, {upper_bound:.2f}]")
+
+# 3. Remove duplicate rows (if any)
+print(f"\n3. Checking for duplicates...")
+initial_rows = len(df_clean)
+df_clean = df_clean.drop_duplicates()
+print(f"Removed {initial_rows - len(df_clean)} duplicate rows")
+
+print(f"\nCleaned dataset shape: {df_clean.shape}")
+```
+
+## Step 4: Handle Missing Data
+
+```python
+print("=== Handling Missing Data ===")
+
+# Analyze missing data patterns
+print("Missing data before imputation:")
+print(df_clean.isnull().sum())
+
+# 1. For age: Use median imputation (simple approach)
+print("\n1. Imputing age with median...")
+age_median = df_clean['age'].median()
+df_clean['age'].fillna(age_median, inplace=True)
+
+# 2. For income: Use KNN imputation (considering relationships)
+print("2. Imputing income using KNN...")
+
+# Prepare data for KNN imputation
+# We need to encode categorical variables first
+df_for_knn = df_clean.copy()
+
+# Encode categorical variables
+le_contract = LabelEncoder()
+le_internet = LabelEncoder()
+
+df_for_knn['contract_length_encoded'] = le_contract.fit_transform(df_for_knn['contract_length'])
+df_for_knn['internet_type_encoded'] = le_internet.fit_transform(df_for_knn['internet_type'])
+
+# Select features for KNN imputation
+features_for_knn = [
+    'age', 'tenure_months', 'monthly_charges', 'contract_length_encoded',
+    'internet_type_encoded', 'support_calls', 'data_usage_gb', 'satisfaction_score'
+]
+
+# Apply KNN imputation
+knn_imputer = KNNImputer(n_neighbors=5)
+imputed_values = knn_imputer.fit_transform(df_for_knn[features_for_knn])
+
+# Update the dataframe
+df_clean['income'] = imputed_values[:, 0]
+
+# 3. For satisfaction_score: Use model-based imputation
+print("3. Imputing satisfaction_score using regression...")
+
+# Create a model to predict satisfaction_score
+from sklearn.ensemble import RandomForestRegressor
+
+# Get rows where satisfaction_score is not missing
+known_satisfaction = df_clean[df_clean['satisfaction_score'].notnull()]
+unknown_satisfaction = df_clean[df_clean['satisfaction_score'].isnull()]
+
+if len(unknown_satisfaction) > 0:
+    # Features for prediction
+    X = known_satisfaction[[
+        'age', 'income', 'tenure_months', 'monthly_charges',
+        'contract_length_encoded', 'internet_type_encoded', 'support_calls', 'data_usage_gb'
+    ]]
+    y = known_satisfaction['satisfaction_score']
+
+    # Train model
+    rf_satisfaction = RandomForestRegressor(n_estimators=100, random_state=42)
+    rf_satisfaction.fit(X, y)
+
+    # Predict missing values
+    X_missing = unknown_satisfaction[[
+        'age', 'income', 'tenure_months', 'monthly_charges',
+        'contract_length_encoded', 'internet_type_encoded', 'support_calls', 'data_usage_gb'
+    ]]
+
+    predicted_satisfaction = rf_satisfaction.predict(X_missing)
+
+    # Fill in predictions
+    missing_indices = unknown_satisfaction.index
+    df_clean.loc[missing_indices, 'satisfaction_score'] = predicted_satisfaction
+
+print(f"\nMissing data after imputation:")
+print(df_clean.isnull().sum().sum())
+
+# Verify no missing values remain
+assert df_clean.isnull().sum().sum() == 0, "There are still missing values!"
+print("✅ All missing values have been handled!")
+```
+
+## Step 5: Feature Engineering
+
+```python
+print("=== Feature Engineering ===")
+
+# Create new features based on domain knowledge
+df_engineered = df_clean.copy()
+
+# 1. Age groups
+df_engineered['age_group'] = pd.cut(
+    df_engineered['age'],
+    bins=[0, 30, 50, 100],
+    labels=['Young', 'Middle-aged', 'Senior']
+)
+
+# 2. Customer value segments
+df_engineered['customer_value'] = pd.qcut(
+    df_engineered['income'],
+    q=3,
+    labels=['Low', 'Medium', 'High']
+)
+
+# 3. Tenure buckets
+df_engineered['tenure_bucket'] = pd.cut(
+    df_engineered['tenure_months'],
+    bins=[0, 12, 36, 60, 1000],
+    labels=['New', 'Established', 'Long-term', 'Very Long-term']
+)
+
+# 4. Monthly charge to income ratio
+df_engineered['charge_to_income_ratio'] = df_engineered['monthly_charges'] / df_engineered['income']
+
+# 5. High usage indicator
+df_engineered['high_usage'] = (df_engineered['data_usage_gb'] > df_engineered['data_usage_gb'].quantile(0.75)).astype(int)
+
+# 6. High support call indicator
+df_engineered['high_support_calls'] = (df_engineered['support_calls'] > 2).astype(int)
+
+# 7. Interaction features
+df_engineered['age_tenure_interaction'] = df_engineered['age'] * df_engineered['tenure_months']
+df_engineered['charges_usage_interaction'] = df_engineered['monthly_charges'] * df_engineered['data_usage_gb']
+
+print(f"Original features: {len(df_clean.columns)}")
+print(f"Engineered features: {len(df_engineered.columns)}")
+print(f"New features added: {len(df_engineered.columns) - len(df_clean.columns)}")
+
+print("\nNew features preview:")
+new_features = ['age_group', 'customer_value', 'tenure_bucket', 'charge_to_income_ratio',
+                'high_usage', 'high_support_calls', 'age_tenure_interaction', 'charges_usage_interaction']
+print(df_engineered[new_features].head())
+```
+
+## Step 6: Feature Encoding and Scaling
+
+```python
+print("=== Feature Encoding and Scaling ===")
+
+# Prepare data for modeling
+df_encoded = df_engineered.copy()
+
+# 1. One-hot encode categorical variables
+categorical_cols = ['contract_length', 'internet_type', 'age_group', 'customer_value', 'tenure_bucket']
+
+print(f"Encoding categorical columns: {categorical_cols}")
+
+# Apply one-hot encoding
+df_encoded = pd.get_dummies(df_encoded, columns=categorical_cols, drop_first=True)
+
+print(f"After one-hot encoding: {df_encoded.shape[1]} features")
+
+# 2. Separate features and target
+X = df_encoded.drop(['customer_id', 'churn'], axis=1)
+y = df_encoded['churn']
+
+print(f"Features shape: {X.shape}")
+print(f"Target shape: {y.shape}")
+
+# 3. Split into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+print(f"Train set: {X_train.shape}")
+print(f"Test set: {X_test.shape}")
+
+# 4. Feature scaling
+print("\nApplying feature scaling...")
+
+# Identify numerical columns that need scaling
+numerical_cols = [
+    'age', 'income', 'tenure_months', 'monthly_charges', 'support_calls',
+    'data_usage_gb', 'satisfaction_score', 'charge_to_income_ratio',
+    'age_tenure_interaction', 'charges_usage_interaction'
+]
+
+# Apply standardization
+scaler = StandardScaler()
+X_train_scaled = X_train.copy()
+X_test_scaled = X_test.copy()
+
+# Fit scaler on training data only
+X_train_scaled[numerical_cols] = scaler.fit_transform(X_train[numerical_cols])
+X_test_scaled[numerical_cols] = scaler.transform(X_test[numerical_cols])  # Use same scaler
+
+print("✅ Feature scaling completed!")
+
+# Verify scaling worked
+print("\nFeature scaling verification:")
+print(f"Mean (should be ~0): {X_train_scaled[numerical_cols].mean().mean():.4f}")
+print(f"Std (should be ~1): {X_train_scaled[numerical_cols].std().mean():.4f}")
+```
+
+## Step 7: Build a Complete Preprocessing Pipeline
+
+```python
+print("=== Building Complete Preprocessing Pipeline ===")
+
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import FunctionTransformer
+
+# Create a function to apply all preprocessing steps
+def create_preprocessing_pipeline():
+    """
+    Create a complete preprocessing pipeline for customer churn prediction
+    """
+
+    # Define numerical and categorical columns
+    numerical_features = [
+        'age', 'income', 'tenure_months', 'monthly_charges',
+        'support_calls', 'data_usage_gb', 'satisfaction_score'
+    ]
+
+    categorical_features = ['contract_length', 'internet_type']
+
+    # Numerical transformer: impute and scale
+    numerical_transformer = Pipeline(steps=[
+        ('imputer', KNNImputer(n_neighbors=5)),
+        ('scaler', StandardScaler())
+    ])
+
+    # Categorical transformer: impute and encode
+    categorical_transformer = Pipeline(steps=[
+        ('encoder', OneHotEncoder(drop='first', handle_unknown='ignore'))
+    ])
+
+    # Combine transformers
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numerical_transformer, numerical_features),
+            ('cat', categorical_transformer, categorical_features)
+        ]
+    )
+
+    return preprocessor
+
+# Create the pipeline
+preprocessing_pipeline = create_preprocessing_pipeline()
+
+# Apply to our data (for demonstration)
+# Note: In practice, you'd use this in a full ML pipeline with your model
+
+# Prepare data for pipeline
+X_pipeline = df_clean[categorical_features + numerical_features]
+y_pipeline = df_clean['churn']
+
+# Split data
+X_train_pipe, X_test_pipe, y_train_pipe, y_test_pipe = train_test_split(
+    X_pipeline, y_pipeline, test_size=0.2, random_state=42, stratify=y_pipeline
+)
+
+# Fit and transform
+X_train_processed = preprocessing_pipeline.fit_transform(X_train_pipe)
+X_test_processed = preprocessing_pipeline.transform(X_test_pipe)
+
+print(f"Original features: {X_train_pipe.shape[1]}")
+print(f"Processed features: {X_train_processed.shape[1]}")
+print(f"Training set shape: {X_train_processed.shape}")
+print(f"Test set shape: {X_test_processed.shape}")
+
+# Show feature names
+feature_names = (
+    numerical_features +
+    preprocessing_pipeline.named_transformers_['cat']['encoder']
+    .get_feature_names_out(categorical_features).tolist()
+)
+
+print(f"\nFeature names:")
+for i, name in enumerate(feature_names[:10]):  # Show first 10
+    print(f"  {i+1}. {name}")
+print(f"  ... and {len(feature_names)-10} more")
+```
+
+## Step 8: Evaluate the Preprocessing Pipeline
+
+```python
+print("=== Evaluating Preprocessing Results ===")
+
+# Train a simple model to test our preprocessing
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
+# Train logistic regression
+model = LogisticRegression(random_state=42, max_iter=1000)
+model.fit(X_train_processed, y_train_pipe)
+
+# Make predictions
+y_pred = model.predict(X_test_processed)
+y_pred_proba = model.predict_proba(X_test_processed)[:, 1]
+
+# Evaluate
+print("Model Performance:")
+print(f"AUC Score: {roc_auc_score(y_test_pipe, y_pred_proba):.4f}")
+print("\nClassification Report:")
+print(classification_report(y_test_pipe, y_pred))
+
+# Feature importance (coefficients)
+feature_importance = pd.DataFrame({
+    'feature': feature_names,
+    'importance': abs(model.coef_[0])
+}).sort_values('importance', ascending=False)
+
+print("\nTop 10 Most Important Features:")
+print(feature_importance.head(10))
+
+# Visualize results
+fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+
+# 1. AUC curve
+from sklearn.metrics import roc_curve
+fpr, tpr, _ = roc_curve(y_test_pipe, y_pred_proba)
+axes[0, 0].plot(fpr, tpr, label=f'AUC = {roc_auc_score(y_test_pipe, y_pred_proba):.3f}')
+axes[0, 0].plot([0, 1], [0, 1], 'k--')
+axes[0, 0].set_xlabel('False Positive Rate')
+axes[0, 0].set_ylabel('True Positive Rate')
+axes[0, 0].set_title('ROC Curve')
+axes[0, 0].legend()
+
+# 2. Confusion matrix
+cm = confusion_matrix(y_test_pipe, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', ax=axes[0, 1])
+axes[0, 1].set_title('Confusion Matrix')
+axes[0, 1].set_xlabel('Predicted')
+axes[0, 1].set_ylabel('Actual')
+
+# 3. Feature importance
+top_features = feature_importance.head(10)
+axes[1, 0].barh(range(len(top_features)), top_features['importance'])
+axes[1, 0].set_yticks(range(len(top_features)))
+axes[1, 0].set_yticklabels(top_features['feature'])
+axes[1, 0].set_xlabel('Absolute Coefficient Value')
+axes[1, 0].set_title('Top 10 Feature Importances')
+axes[1, 0].invert_yaxis()
+
+# 4. Churn prediction distribution
+axes[1, 1].hist(y_pred_proba[y_test_pipe == 0], alpha=0.5, label='No Churn', bins=20)
+axes[1, 1].hist(y_pred_proba[y_test_pipe == 1], alpha=0.5, label='Churn', bins=20)
+axes[1, 1].set_xlabel('Predicted Probability of Churn')
+axes[1, 1].set_ylabel('Frequency')
+axes[1, 1].set_title('Prediction Distribution by Actual Churn')
+axes[1, 1].legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+## Step 9: Save Your Preprocessing Pipeline
+
+```python
+print("=== Saving Preprocessing Pipeline ===")
+
+import joblib
+
+# Save the preprocessing pipeline
+joblib.dump(preprocessing_pipeline, 'preprocessing_pipeline.pkl')
+print("✅ Preprocessing pipeline saved to 'preprocessing_pipeline.pkl'")
+
+# Save the model
+joblib.dump(model, 'churn_model.pkl')
+print("✅ Model saved to 'churn_model.pkl'")
+
+# Create a complete pipeline with model
+from sklearn.pipeline import Pipeline as SKPipeline
+
+complete_pipeline = SKPipeline([
+    ('preprocessor', preprocessing_pipeline),
+    ('classifier', model)
+])
+
+joblib.dump(complete_pipeline, 'complete_churn_pipeline.pkl')
+print("✅ Complete pipeline saved to 'complete_churn_pipeline.pkl'")
+
+# Test the saved pipeline
+loaded_pipeline = joblib.load('complete_churn_pipeline.pkl')
+test_prediction = loaded_pipeline.predict(X_test_pipe.iloc[:5])
+print(f"\nTest predictions with loaded pipeline: {test_prediction}")
+```
+
+## Step 10: Challenge Exercises
+
+Now that you've completed the basic pipeline, try these advanced challenges:
+
+### Challenge 1: Cross-Validation
+Implement cross-validation to get a more robust estimate of your model's performance.
+
+```python
+from sklearn.model_selection import cross_val_score
+
+# Your code here
+cv_scores = cross_val_score(complete_pipeline, X_train_pipe, y_train_pipe, cv=5, scoring='roc_auc')
+print(f"Cross-validation AUC: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
+```
+
+### Challenge 2: Feature Selection
+Experiment with different feature selection techniques to improve model performance.
+
+```python
+from sklearn.feature_selection import SelectKBest, f_classif
+
+# Your code here - add feature selection to the pipeline
+```
+
+### Challenge 3: Hyperparameter Tuning
+Tune the hyperparameters of your preprocessing steps and model.
+
+```python
+from sklearn.model_selection import GridSearchCV
+
+# Your code here - use GridSearchCV to tune parameters
+```
+
+### Challenge 4: Different Models
+Try different machine learning models and compare their performance.
+
+```python
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+
+# Your code here - compare different models
+```
+
+## Summary and Key Takeaways
+
+Congratulations! You've successfully built a complete data preprocessing pipeline. Here's what you accomplished:
+
+### ✅ **Data Cleaning**
+- Handled inconsistent categorical values
+- Detected and capped outliers
+- Removed duplicate data
+
+### ✅ **Missing Data Handling**
+- Applied different imputation strategies based on data patterns
+- Used KNN imputation for complex relationships
+- Implemented model-based imputation for sophisticated cases
+
+### ✅ **Feature Engineering**
+- Created meaningful categorical bins
+- Generated interaction features
+- Added domain-specific calculated features
+
+### ✅ **Feature Scaling and Encoding**
+- Applied appropriate scaling to numerical features
+- Used one-hot encoding for categorical variables
+- Maintained proper train/test separation
+
+### ✅ **Pipeline Building**
+- Created reusable preprocessing pipelines
+- Integrated preprocessing with model training
+- Saved and tested the complete pipeline
+
+### **Best Practices Demonstrated**
+1. **Always fit preprocessing on training data only**
+2. **Apply the same transformations to test data**
+3. **Handle missing values strategically based on the mechanism**
+4. **Create features based on domain knowledge**
+5. **Validate your preprocessing steps**
+6. **Save your preprocessing pipeline for future use**
+
+### **Next Steps**
+- Experiment with different preprocessing techniques
+- Try more advanced feature engineering
+- Explore automated feature selection methods
+- Learn about advanced imputation techniques
+- Practice with different types of datasets
+
+**Remember**: Good preprocessing is often more important than choosing the most sophisticated model. A well-preprocessed dataset with a simple model can outperform a complex model with poor preprocessing!

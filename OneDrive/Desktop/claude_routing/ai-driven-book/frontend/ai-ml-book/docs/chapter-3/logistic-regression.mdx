@@ -1,0 +1,645 @@
+---
+sidebar_position: 3
+---
+
+# Logistic Regression
+
+Logistic Regression is a fundamental supervised learning algorithm used for binary and multi-class classification problems. Despite its name, it's a classification algorithm that uses a logistic function to model the probability of class membership.
+
+## What is Logistic Regression?
+
+Logistic Regression estimates the probability that an input belongs to a particular class. Unlike linear regression which outputs continuous values, logistic regression outputs probabilities between 0 and 1.
+
+### The Mathematical Foundation
+
+The core of logistic regression is the **sigmoid function** (logistic function):
+
+```
+σ(z) = 1 / (1 + e^(-z))
+```
+
+Where z = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ
+
+The sigmoid function transforms any real number into a value between 0 and 1, making it perfect for probability estimation.
+
+### Binary Classification
+
+For binary classification (two classes), logistic regression models:
+
+```
+P(y=1|x) = σ(β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ)
+P(y=0|x) = 1 - P(y=1|x)
+```
+
+Where:
+- **P(y=1|x)**: Probability that input x belongs to class 1
+- **β₀, β₁, ..., βₙ**: Model parameters (coefficients)
+
+## Binary Logistic Regression
+
+### Basic Implementation
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Generate binary classification data
+X, y = make_classification(n_samples=1000, n_features=2, n_redundant=0,
+                          n_informative=2, n_clusters_per_class=1, random_state=42)
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+y_pred_proba = model.predict_proba(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.3f}")
+print(f"Coefficients: {model.coef_[0]}")
+print(f"Intercept: {model.intercept_[0]:.3f}")
+
+# Visualize the decision boundary
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap='viridis', alpha=0.6)
+plt.title('Data Distribution')
+
+# Plot decision boundary
+xx, yy = np.meshgrid(np.linspace(X[:, 0].min()-1, X[:, 0].max()+1, 100),
+                     np.linspace(X[:, 1].min()-1, X[:, 1].max()+1, 100))
+grid = np.c_[xx.ravel(), yy.ravel()]
+probs = model.predict_proba(grid)[:, 1].reshape(xx.shape)
+
+plt.contour(xx, yy, probs, levels=[0.5], colors='red', linewidths=2)
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+
+plt.subplot(1, 2, 2)
+# Show probability contours
+plt.contourf(xx, yy, probs, levels=50, cmap='RdYlBu', alpha=0.6)
+plt.colorbar(label='Probability of Class 1')
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap='viridis', edgecolors='black')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.title('Logistic Regression Decision Boundary')
+
+plt.tight_layout()
+plt.show()
+```
+
+### Understanding the Sigmoid Function
+
+```python
+def sigmoid(z):
+    """Logistic sigmoid function"""
+    return 1 / (1 + np.exp(-z))
+
+# Visualize sigmoid function
+z = np.linspace(-10, 10, 100)
+sigmoid_values = sigmoid(z)
+
+plt.figure(figsize=(10, 6))
+plt.plot(z, sigmoid_values, 'b-', linewidth=3)
+plt.axhline(y=0.5, color='red', linestyle='--', alpha=0.7, label='Decision boundary (p=0.5)')
+plt.axvline(x=0, color='red', linestyle='--', alpha=0.7, label='z=0')
+plt.xlabel('z (Linear combination)')
+plt.ylabel('σ(z) (Probability)')
+plt.title('Sigmoid Function')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+
+print("Key properties of sigmoid function:")
+print("- Range: (0, 1)")
+print("- Sigmoid(0) = 0.5")
+print("- As z → ∞, σ(z) → 1")
+print("- As z → -∞, σ(z) → 0")
+```
+
+### Custom Logistic Regression Implementation
+
+```python
+class LogisticRegressionGD:
+    def __init__(self, learning_rate=0.01, epochs=1000):
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        self.costs = []
+
+    def sigmoid(self, z):
+        # Clip z to prevent overflow
+        z = np.clip(z, -500, 500)
+        return 1 / (1 + np.exp(-z))
+
+    def fit(self, X, y):
+        # Add bias term
+        X_b = np.c_[np.ones((X.shape[0], 1)), X]
+
+        # Initialize parameters
+        self.theta = np.random.randn(X_b.shape[1]) * 0.01
+
+        # Gradient descent
+        for i in range(self.epochs):
+            # Forward pass
+            z = X_b.dot(self.theta)
+            y_pred = self.sigmoid(z)
+
+            # Calculate cost (log loss)
+            cost = -np.mean(y * np.log(y_pred + 1e-15) + (1 - y) * np.log(1 - y_pred + 1e-15))
+            self.costs.append(cost)
+
+            # Calculate gradients
+            gradients = (1/m) * X_b.T.dot(y_pred - y)
+
+            # Update parameters
+            self.theta = self.theta - self.learning_rate * gradients
+
+    def predict_proba(self, X):
+        X_b = np.c_[np.ones((X.shape[0], 1)), X]
+        z = X_b.dot(self.theta)
+        return self.sigmoid(z)
+
+    def predict(self, X):
+        probabilities = self.predict_proba(X)
+        return (probabilities >= 0.5).astype(int)
+
+# Compare with sklearn
+custom_model = LogisticRegressionGD(learning_rate=0.1, epochs=1000)
+custom_model.fit(X_train, y_train)
+
+sklearn_model = LogisticRegression()
+sklearn_model.fit(X_train, y_train)
+
+# Compare predictions
+custom_pred = custom_model.predict(X_test)
+sklearn_pred = sklearn_model.predict(X_test)
+
+print(f"Custom model accuracy: {accuracy_score(y_test, custom_pred):.3f}")
+print(f"Sklearn model accuracy: {accuracy_score(y_test, sklearn_pred):.3f}")
+
+# Plot convergence
+plt.figure(figsize=(10, 6))
+plt.plot(custom_model.costs)
+plt.title('Logistic Regression Cost Function Convergence')
+plt.xlabel('Epochs')
+plt.ylabel('Log Loss')
+plt.grid(True)
+plt.show()
+```
+
+## Multi-class Classification
+
+### One-vs-Rest (OvR) Strategy
+
+Logistic regression can handle multi-class problems using the One-vs-Rest approach.
+
+```python
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+# Load iris dataset
+iris = load_iris()
+X_iris, y_iris = iris.data, iris.target
+
+# Split data
+X_train_iris, X_test_iris, y_train_iris, y_test_iris = train_test_split(
+    X_iris, y_iris, test_size=0.3, random_state=42
+)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train_iris)
+X_test_scaled = scaler.transform(X_test_iris)
+
+# Train multi-class logistic regression
+model_iris = LogisticRegression(multi_class='ovr', solver='liblinear')
+model_iris.fit(X_train_scaled, y_train_iris)
+
+# Make predictions
+y_pred_iris = model_iris.predict(X_test_scaled)
+y_pred_proba_iris = model_iris.predict_proba(X_test_scaled)
+
+# Evaluate
+accuracy_iris = accuracy_score(y_test_iris, y_pred_iris)
+print(f"Multi-class accuracy: {accuracy_iris:.3f}")
+print(f"Classes: {iris.target_names}")
+print(f"Coefficients shape: {model_iris.coef_.shape}")
+
+# Show confusion matrix
+cm = confusion_matrix(y_test_iris, y_pred_iris)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=iris.target_names,
+            yticklabels=iris.target_names)
+plt.title('Confusion Matrix - Iris Dataset')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
+```
+
+### Softmax Regression (Multinomial)
+
+For multi-class problems, we can also use softmax regression:
+
+```python
+# Softmax regression
+softmax_model = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
+softmax_model.fit(X_train_scaled, y_train_iris)
+
+softmax_pred = softmax_model.predict(X_test_scaled)
+softmax_accuracy = accuracy_score(y_test_iris, softmax_pred)
+
+print(f"Softmax regression accuracy: {softmax_accuracy:.3f}")
+
+# Compare predictions
+print("\nComparison of OvR vs Softmax:")
+print(f"OvR accuracy: {accuracy_iris:.3f}")
+print(f"Softmax accuracy: {softmax_accuracy:.3f}")
+```
+
+## Model Evaluation for Classification
+
+### Confusion Matrix Analysis
+
+```python
+from sklearn.metrics import confusion_matrix, classification_report
+
+# Detailed confusion matrix analysis
+cm = confusion_matrix(y_test, y_pred)
+tn, fp, fn, tp = cm.ravel()
+
+print("Confusion Matrix:")
+print(cm)
+print(f"\nTN: {tn}, FP: {fp}, FN: {fn}, TP: {tp}")
+
+# Calculate metrics
+accuracy = (tp + tn) / (tp + tn + fp + fn)
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+f1_score = 2 * (precision * recall) / (precision + recall)
+
+print(f"\nMetrics:")
+print(f"Accuracy: {accuracy:.3f}")
+print(f"Precision: {precision:.3f}")
+print(f"Recall (Sensitivity): {recall:.3f}")
+print(f"F1 Score: {f1_score:.3f}")
+
+# Specificity
+specificity = tn / (tn + fp)
+print(f"Specificity: {specificity:.3f}")
+```
+
+### ROC Curve and AUC
+
+```python
+from sklearn.metrics import roc_curve, auc, roc_auc_score
+
+# ROC curve for binary classification
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba[:, 1])
+roc_auc = auc(fpr, tpr)
+
+plt.figure(figsize=(10, 6))
+plt.plot(fpr, tpr, color='darkorange', lw=2,
+         label=f'ROC curve (AUC = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random classifier')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc="lower right")
+plt.grid(True)
+plt.show()
+
+print(f"AUC Score: {roc_auc_score(y_test, y_pred_proba[:, 1]):.3f}")
+```
+
+### Precision-Recall Curve
+
+```python
+from sklearn.metrics import precision_recall_curve
+
+precision_curve, recall_curve, _ = precision_recall_curve(y_test, y_pred_proba[:, 1])
+pr_auc = auc(recall_curve, precision_curve)
+
+plt.figure(figsize=(10, 6))
+plt.plot(recall_curve, precision_curve, color='purple', lw=2,
+         label=f'PR curve (AUC = {pr_auc:.2f})')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Precision-Recall Curve')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+print(f"PR AUC Score: {pr_auc:.3f}")
+```
+
+### Classification Report
+
+```python
+print("Classification Report:")
+print(classification_report(y_test, y_pred, target_names=['Class 0', 'Class 1']))
+
+# For multi-class
+print("\nMulti-class Classification Report:")
+print(classification_report(y_test_iris, y_pred_iris, target_names=iris.target_names))
+```
+
+## Advanced Topics
+
+### Feature Importance and Interpretation
+
+```python
+# Feature importance in logistic regression
+feature_names = [f'Feature {i+1}' for i in range(X.shape[1])]
+coefficients = model.coef_[0]
+
+# Create DataFrame for better visualization
+importance_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Coefficient': coefficients,
+    'Abs_Coefficient': np.abs(coefficients)
+}).sort_values('Abs_Coefficient', ascending=False)
+
+plt.figure(figsize=(10, 6))
+plt.barh(importance_df['Feature'], importance_df['Coefficient'])
+plt.xlabel('Coefficient Value')
+plt.title('Feature Importance in Logistic Regression')
+plt.axvline(x=0, color='black', linestyle='-', alpha=0.3)
+plt.show()
+
+print("Feature importance (sorted by absolute coefficient):")
+print(importance_df)
+```
+
+### Regularization in Logistic Regression
+
+```python
+# L1 Regularization (Lasso)
+l1_model = LogisticRegression(penalty='l1', solver='liblinear', C=1.0)
+l1_model.fit(X_train, y_train)
+l1_pred = l1_model.predict(X_test)
+print(f"L1 Regularization accuracy: {accuracy_score(y_test, l1_pred):.3f}")
+print(f"Number of features used: {np.sum(l1_model.coef_[0] != 0)}")
+
+# L2 Regularization (Ridge)
+l2_model = LogisticRegression(penalty='l2', solver='liblinear', C=1.0)
+l2_model.fit(X_train, y_train)
+print(f"L2 Regularization accuracy: {accuracy_score(y_test, l2_model.predict(X_test)):.3f}")
+
+# Compare coefficients
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.bar(range(len(model.coef_[0])), model.coef_[0])
+plt.title('No Regularization')
+plt.ylabel('Coefficient')
+
+plt.subplot(1, 3, 2)
+plt.bar(range(len(l1_model.coef_[0])), l1_model.coef_[0])
+plt.title('L1 Regularization (Lasso)')
+plt.ylabel('Coefficient')
+
+plt.subplot(1, 3, 3)
+plt.bar(range(len(l2_model.coef_[0])), l2_model.coef_[0])
+plt.title('L2 Regularization (Ridge)')
+plt.ylabel('Coefficient')
+
+plt.tight_layout()
+plt.show()
+```
+
+### Hyperparameter Tuning
+
+```python
+from sklearn.model_selection import GridSearchCV
+
+# Hyperparameter tuning
+param_grid = {
+    'C': [0.001, 0.01, 0.1, 1, 10, 100],
+    'penalty': ['l1', 'l2'],
+    'solver': ['liblinear', 'saga']
+}
+
+grid_search = GridSearchCV(LogisticRegression(), param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_train, y_train)
+
+print("Best parameters:", grid_search.best_params_)
+print("Best cross-validation score:", grid_search.best_score_)
+
+# Evaluate on test set
+best_model = grid_search.best_estimator_
+test_accuracy = best_model.score(X_test, y_test)
+print(f"Test accuracy with best parameters: {test_accuracy:.3f}")
+```
+
+## Real-World Applications
+
+### Email Spam Detection
+
+```python
+# Simulate email spam detection dataset
+from sklearn.datasets import fetch_20newsgroups_vectorized
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# For demonstration, we'll create a synthetic dataset
+np.random.seed(42)
+n_samples = 1000
+
+# Create features that might indicate spam
+word_counts = np.random.poisson(100, n_samples)
+exclamation_marks = np.random.poisson(5, n_samples)
+dollar_signs = np.random.poisson(2, n_samples)
+caps_ratio = np.random.beta(2, 8, n_samples)
+
+# Create spam probability based on features
+spam_prob = (
+    0.1 * (word_counts > 150) +
+    0.3 * (exclamation_marks > 10) +
+    0.4 * (dollar_signs > 3) +
+    0.2 * (caps_ratio > 0.3) +
+    np.random.normal(0, 0.1, n_samples)
+)
+
+# Create binary target
+y_spam = (spam_prob > 0.5).astype(int)
+
+# Features
+X_spam = np.column_stack([word_counts, exclamation_marks, dollar_signs, caps_ratio])
+
+# Split and train
+X_train_s, X_test_s, y_train_s, y_test_s = train_test_split(X_spam, y_spam, test_size=0.2, random_state=42)
+
+spam_model = LogisticRegression()
+spam_model.fit(X_train_s, y_train_s)
+
+# Evaluate
+spam_pred = spam_model.predict(X_test_s)
+spam_accuracy = accuracy_score(y_test_s, spam_pred)
+print(f"Spam detection accuracy: {spam_accuracy:.3f}")
+
+# Feature importance for spam detection
+feature_names_spam = ['Word Count', 'Exclamation Marks', 'Dollar Signs', 'Caps Ratio']
+spam_importance = pd.DataFrame({
+    'Feature': feature_names_spam,
+    'Coefficient': spam_model.coef_[0],
+    'Abs_Coefficient': np.abs(spam_model.coef_[0])
+}).sort_values('Abs_Coefficient', ascending=False)
+
+print("\nSpam Detection Feature Importance:")
+print(spam_importance)
+```
+
+### Medical Diagnosis
+
+```python
+# Simulate medical diagnosis dataset
+np.random.seed(123)
+
+# Patient features
+age = np.random.normal(50, 15, 1000)
+blood_pressure = np.random.normal(120, 20, 1000)
+cholesterol = np.random.normal(200, 40, 1000)
+glucose = np.random.normal(100, 20, 1000)
+
+# Disease probability
+disease_prob = (
+    0.02 * (age - 50) +
+    0.01 * (blood_pressure - 120) +
+    0.005 * (cholesterol - 200) +
+    0.01 * (glucose - 100) +
+    np.random.normal(0, 5, 1000)
+)
+
+y_disease = (disease_prob > 0).astype(int)
+X_disease = np.column_stack([age, blood_pressure, cholesterol, glucose])
+
+# Train disease prediction model
+X_train_d, X_test_d, y_train_d, y_test_d = train_test_split(X_disease, y_disease, test_size=0.2, random_state=42)
+
+disease_model = LogisticRegression()
+disease_model.fit(X_train_d, y_train_d)
+
+# Evaluate
+disease_pred = disease_model.predict(X_test_d)
+disease_proba = disease_model.predict_proba(X_test_d)
+
+print(f"Disease prediction accuracy: {accuracy_score(y_test_d, disease_pred):.3f}")
+
+# Show probability distribution
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.hist(disease_proba[y_test_d == 0, 1], bins=20, alpha=0.7, label='Healthy', color='green')
+plt.hist(disease_proba[y_test_d == 1, 1], bins=20, alpha=0.7, label='Diseased', color='red')
+plt.xlabel('Predicted Probability of Disease')
+plt.ylabel('Frequency')
+plt.legend()
+plt.title('Probability Distribution by Actual Status')
+
+plt.subplot(1, 2, 2)
+# Feature importance
+disease_features = ['Age', 'Blood Pressure', 'Cholesterol', 'Glucose']
+disease_importance = pd.DataFrame({
+    'Feature': disease_features,
+    'Coefficient': disease_model.coef_[0]
+}).sort_values('Coefficient', ascending=False)
+
+plt.bar(disease_importance['Feature'], disease_importance['Coefficient'])
+plt.ylabel('Coefficient Value')
+plt.title('Medical Risk Factors')
+plt.xticks(rotation=45)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Common Pitfalls and Solutions
+
+### 1. Perfect Separation
+**Problem**: When classes are perfectly separable, coefficients can become very large.
+**Solution**: Use regularization or collect more data.
+
+### 2. Feature Scaling
+**Problem**: Features on different scales can affect convergence and interpretation.
+**Solution**: Always scale features before training.
+
+```python
+# Compare with and without scaling
+from sklearn.preprocessing import StandardScaler
+
+# Without scaling
+model_no_scale = LogisticRegression()
+model_no_scale.fit(X_train, y_train)
+
+# With scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+model_scaled = LogisticRegression()
+model_scaled.fit(X_train_scaled, y_train)
+
+print("Without scaling - coefficients:", model_no_scale.coef_[0])
+print("With scaling - coefficients:", model_scaled.coef_[0])
+```
+
+### 3. Class Imbalance
+**Problem**: When one class has significantly more samples than another.
+**Solution**: Use class_weight parameter or resampling techniques.
+
+```python
+from imblearn.over_sampling import SMOTE
+
+# Create imbalanced dataset
+X_imbalanced = np.vstack([X[y==0][:50], X[y==1]])
+y_imbalanced = np.hstack([y[y==0][:50], y[y==1]])
+
+print(f"Class distribution: {np.bincount(y_imbalanced)}")
+
+# Train on imbalanced data
+model_imbalanced = LogisticRegression()
+model_imbalanced.fit(X_imbalanced, y_imbalanced)
+
+# Use class weighting
+model_weighted = LogisticRegression(class_weight='balanced')
+model_weighted.fit(X_imbalanced, y_imbalanced)
+
+# Use SMOTE for oversampling
+smote = SMOTE(random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X_imbalanced, y_imbalanced)
+
+model_smote = LogisticRegression()
+model_smote.fit(X_resampled, y_resampled)
+
+print("Imbalanced accuracy:", model_imbalanced.score(X_imbalanced, y_imbalanced))
+print("Weighted accuracy:", model_weighted.score(X_imbalanced, y_imbalanced))
+print("SMOTE accuracy:", model_smote.score(X_imbalanced, y_imbalanced))
+```
+
+### 4. Multicollinearity
+**Problem**: Highly correlated features can make coefficient interpretation difficult.
+**Solution**: Use regularization or remove correlated features.
+
+## Key Takeaways
+
+1. **Logistic regression outputs probabilities** - Use threshold of 0.5 for binary classification
+2. **Coefficients are interpretable** - Positive coefficients increase probability, negative decrease it
+3. **Regularization prevents overfitting** - L1 for feature selection, L2 for coefficient shrinkage
+4. **Feature scaling is crucial** - Especially for regularization methods
+5. **Evaluation metrics matter** - Use confusion matrix, ROC curves, and precision-recall curves
+6. **Handle class imbalance** - Use appropriate techniques when classes are uneven
+7. **Cross-validation is essential** - For model selection and hyperparameter tuning
+
+Logistic regression is a powerful and interpretable algorithm that forms the foundation for understanding more complex classification methods. Its probabilistic nature makes it particularly useful when you need confidence estimates along with predictions.

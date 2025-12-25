@@ -1,0 +1,505 @@
+---
+sidebar_position: 5
+---
+
+# Handling Missing Data
+
+Missing data is a common challenge in real-world datasets. Whether due to equipment failure, human error, or privacy concerns, you'll frequently encounter datasets with incomplete information. This chapter teaches you systematic approaches to handle missing data effectively.
+
+## Understanding Missing Data Patterns
+
+### Types of Missing Data
+
+Understanding why data is missing helps you choose the right handling strategy:
+
+#### 1. Missing Completely at Random (MCAR)
+The missingness has no relationship to any observed or unobserved variables.
+
+**Example**: Survey responses missing because of a printing error.
+
+#### 2. Missing at Random (MAR)
+The missingness depends on observed variables but not on the missing data itself.
+
+**Example**: Income data more likely to be missing for younger respondents, but given age, the missingness doesn't depend on income.
+
+#### 3. Missing Not at Random (MNAR)
+The missingness depends on the missing data itself.
+
+**Example**: High-income individuals are less likely to report their income.
+
+## Detecting Missing Data
+
+```python
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Create sample data with missing values
+np.random.seed(42)
+data = pd.DataFrame({
+    'age': [25, 30, np.nan, 40, 45, np.nan, 55, 60],
+    'income': [50000, np.nan, 70000, 80000, np.nan, 90000, 100000, np.nan],
+    'education': ['Bachelors', 'Masters', 'PhD', np.nan, 'Bachelors', 'Masters', np.nan, 'Bachelors'],
+    'experience': [2, 5, 8, np.nan, 12, 15, 18, 20]
+})
+
+print("Original data:")
+print(data)
+print("\nMissing values per column:")
+print(data.isnull().sum())
+print(f"\nTotal missing values: {data.isnull().sum().sum()}")
+print(f"Percentage missing: {(data.isnull().sum().sum() / (data.shape[0] * data.shape[1])) * 100:.2f}%")
+```
+
+## Visualizing Missing Data
+
+```python
+# Visualize missing data patterns
+fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+
+# 1. Missing data heatmap
+sns.heatmap(data.isnull(), cbar=True, cmap='viridis', ax=axes[0,0])
+axes[0,0].set_title('Missing Data Pattern')
+
+# 2. Missing data count per column
+missing_counts = data.isnull().sum()
+axes[0,1].bar(missing_counts.index, missing_counts.values, color='skyblue')
+axes[0,1].set_title('Missing Values by Column')
+axes[0,1].tick_params(axis='x', rotation=45)
+
+# 3. Missing data percentage
+missing_pct = (missing_counts / len(data)) * 100
+axes[1,0].pie(missing_pct, labels=missing_pct.index, autopct='%1.1f%%')
+axes[1,0].set_title('Missing Data Percentage')
+
+# 4. Missing data matrix (using missingno library if available)
+try:
+    import missingno as msno
+    msno.matrix(data, ax=axes[1,1], sparkline=False)
+    axes[1,1].set_title('Missing Data Matrix')
+except ImportError:
+    axes[1,1].text(0.5, 0.5, 'Install missingno library\nto see this plot',
+                  ha='center', va='center', transform=axes[1,1].transAxes)
+    axes[1,1].set_title('Missing Data Matrix')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Handling Missing Data Strategies
+
+### 1. Deletion Methods
+
+#### Listwise Deletion (Complete Case Analysis)
+Remove rows with any missing values.
+
+```python
+# Remove rows with any missing values
+complete_cases = data.dropna()
+print("After listwise deletion:")
+print(f"Original rows: {len(data)}")
+print(f"Remaining rows: {len(complete_cases)}")
+print(f"Data lost: {(len(data) - len(complete_cases)) / len(data) * 100:.1f}%")
+
+# Remove rows where specific columns are missing
+specific_deletion = data.dropna(subset=['age', 'income'])
+print(f"\nAfter deleting rows missing 'age' or 'income': {len(specific_deletion)} rows")
+```
+
+**Pros**: Simple, unbiased if MCAR
+**Cons**: Loss of data, biased if not MCAR
+
+#### Pairwise Deletion
+Use available data for each analysis.
+
+```python
+# Calculate correlation using pairwise deletion
+correlation = data.corr()
+print("Correlation matrix (pairwise deletion):")
+print(correlation)
+```
+
+### 2. Imputation Methods
+
+#### Mean/Median/Mode Imputation
+Replace missing values with central tendency measures.
+
+```python
+# Create a copy for imputation
+data_imputed = data.copy()
+
+# Mean imputation for numerical columns
+numerical_cols = ['age', 'income', 'experience']
+for col in numerical_cols:
+    data_imputed[col].fillna(data_imputed[col].mean(), inplace=True)
+
+# Mode imputation for categorical columns
+categorical_cols = ['education']
+for col in categorical_cols:
+    data_imputed[col].fillna(data_imputed[col].mode()[0], inplace=True)
+
+print("After mean/mode imputation:")
+print(data_imputed)
+```
+
+**Pros**: Simple, preserves sample size
+**Cons**: Reduces variance, ignores relationships, may introduce bias
+
+#### Forward Fill and Backward Fill
+Use previous or next values to fill missing data (useful for time series).
+
+```python
+# Sort data by age to demonstrate forward/backward fill
+data_sorted = data.sort_values('age').reset_index(drop=True)
+
+# Forward fill
+data_ffill = data_sorted.fillna(method='ffill')
+print("Forward fill result:")
+print(data_ffill)
+
+# Backward fill
+data_bfill = data_sorted.fillna(method='bfill')
+print("\nBackward fill result:")
+print(data_bfill)
+```
+
+#### K-Nearest Neighbors (KNN) Imputation
+Use similar instances to estimate missing values.
+
+```python
+from sklearn.impute import KNNImputer
+from sklearn.preprocessing import LabelEncoder
+
+# Prepare data for KNN imputation
+data_for_knn = data.copy()
+
+# Encode categorical variables
+label_encoder = LabelEncoder()
+data_for_knn['education_encoded'] = label_encoder.fit_transform(data_for_knn['education'].astype(str))
+
+# Select only numerical columns for KNN
+numerical_data = data_for_knn[['age', 'income', 'experience', 'education_encoded']].copy()
+
+# Apply KNN imputation
+knn_imputer = KNNImputer(n_neighbors=3)
+imputed_data = knn_imputer.fit_transform(numerical_data)
+
+# Convert back to DataFrame
+data_knn = pd.DataFrame(imputed_data, columns=numerical_data.columns)
+
+print("After KNN imputation:")
+print(data_knn.head())
+```
+
+**Pros**: Considers relationships between variables
+**Cons**: Computationally expensive, sensitive to outliers
+
+#### Multiple Imputation
+Create multiple imputed datasets to account for uncertainty.
+
+```python
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+
+# Iterative imputation (MICE - Multiple Imputation by Chained Equations)
+iterative_imputer = IterativeImputer(random_state=42, max_iter=10)
+imputed_multiple = iterative_imputer.fit_transform(numerical_data)
+
+data_iterative = pd.DataFrame(imputed_multiple, columns=numerical_data.columns)
+
+print("After iterative imputation:")
+print(data_iterative.head())
+```
+
+### 3. Model-Based Imputation
+
+#### Using Machine Learning Models
+Train a model to predict missing values.
+
+```python
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+
+# Example: Impute missing income values
+# Use other features to predict income
+income_data = data[['age', 'education', 'experience', 'income']].copy()
+
+# Convert categorical to numerical
+income_data['education_num'] = label_encoder.fit_transform(income_data['education'].astype(str))
+
+# Split into known and unknown income
+known_income = income_data[income_data['income'].notnull()]
+unknown_income = income_data[income_data['income'].isnull()]
+
+# Features and target
+X = known_income[['age', 'education_num', 'experience']]
+y = known_income['income']
+
+# Train model
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+# Predict missing values
+if len(unknown_income) > 0:
+    X_missing = unknown_income[['age', 'education_num', 'experience']]
+    predicted_income = rf_model.predict(X_missing)
+
+    # Fill in predictions
+    data_model_imputed = data.copy()
+    missing_indices = data_model_imputed[data_model_imputed['income'].isnull()].index
+    data_model_imputed.loc[missing_indices, 'income'] = predicted_income
+
+    print("After model-based imputation:")
+    print(data_model_imputed)
+```
+
+## Advanced Missing Data Handling
+
+### 1. Indicator Variables for Missing Data
+Create binary indicators showing which values were missing.
+
+```python
+# Create indicator variables
+data_with_indicators = data.copy()
+
+for col in data.columns:
+    if data[col].isnull().any():
+        data_with_indicators[f'{col}_missing'] = data[col].isnull().astype(int)
+
+print("Data with missing indicators:")
+print(data_with_indicators)
+```
+
+### 2. Custom Imputation Functions
+Create domain-specific imputation logic.
+
+```python
+def custom_impute_age(age_series):
+    """Custom imputation for age based on other factors"""
+    # Simple rule: impute with median if missing
+    # More complex rules could use other variables
+    return age_series.fillna(age_series.median())
+
+def custom_impute_income(income_series, age_series):
+    """Impute income based on age brackets"""
+    imputed = income_series.copy()
+
+    # Define age brackets and their median incomes
+    age_brackets = {
+        (0, 30): 45000,
+        (30, 50): 65000,
+        (50, 100): 80000
+    }
+
+    for (min_age, max_age), median_income in age_brackets.items():
+        mask = (age_series >= min_age) & (age_series < max_age) & (imputed.isnull())
+        imputed.loc[mask] = median_income
+
+    return imputed
+
+# Apply custom imputation
+data_custom = data.copy()
+data_custom['age'] = custom_impute_age(data_custom['age'])
+data_custom['income'] = custom_impute_income(data_custom['income'], data_custom['age'])
+
+print("After custom imputation:")
+print(data_custom)
+```
+
+## Interactive Missing Data Exercise
+
+Let's work with a real dataset to practice these techniques:
+
+```python
+# Load a dataset with missing values
+from sklearn.datasets import fetch_california_housing
+
+# Load California housing dataset
+california = fetch_california_housing()
+df = pd.DataFrame(california.data, columns=california.feature_names)
+df['target'] = california.target
+
+# Add some missing values
+np.random.seed(42)
+missing_indices_age = np.random.choice(len(df), size=int(0.1 * len(df)), replace=False)
+missing_indices_income = np.random.choice(len(df), size=int(0.05 * len(df)), replace=False)
+
+df.loc[missing_indices_age, 'AveRooms'] = np.nan
+df.loc[missing_indices_income, 'AveOccup'] = np.nan
+
+print("California housing dataset with missing values:")
+print(f"Shape: {df.shape}")
+print(f"Missing values:\n{df.isnull().sum()}")
+print(f"Percentage missing: {(df.isnull().sum().sum() / (df.shape[0] * df.shape[1])) * 100:.2f}%")
+
+# Compare different imputation methods
+methods_comparison = {}
+
+# Method 1: Drop missing values
+df_dropped = df.dropna()
+methods_comparison['Dropped'] = {
+    'rows': len(df_dropped),
+    'missing': df_dropped.isnull().sum().sum()
+}
+
+# Method 2: Mean imputation
+df_mean = df.copy()
+for col in df_mean.select_dtypes(include=[np.number]).columns:
+    df_mean[col].fillna(df_mean[col].mean(), inplace=True)
+methods_comparison['Mean'] = {
+    'rows': len(df_mean),
+    'missing': df_mean.isnull().sum().sum()
+}
+
+# Method 3: KNN imputation
+from sklearn.preprocessing import StandardScaler
+
+# Prepare data
+scaler = StandardScaler()
+numerical_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+df_scaled = df.copy()
+df_scaled[numerical_cols] = scaler.fit_transform(df[numerical_cols])
+
+# Apply KNN
+knn_imputer = KNNImputer(n_neighbors=5)
+df_knn_scaled = pd.DataFrame(
+    knn_imputer.fit_transform(df_scaled[numerical_cols]),
+    columns=numerical_cols
+)
+
+# Rescale back
+df_knn = df.copy()
+df_knn[numerical_cols] = scaler.inverse_transform(df_knn_scaled[numerical_cols])
+
+methods_comparison['KNN'] = {
+    'rows': len(df_knn),
+    'missing': df_knn.isnull().sum().sum()
+}
+
+print("\nComparison of imputation methods:")
+for method, stats in methods_comparison.items():
+    print(f"{method}: {stats['rows']} rows, {stats['missing']} missing values")
+```
+
+## Best Practices for Handling Missing Data
+
+### 1. Understand the Missing Data Mechanism
+```python
+# Analyze patterns of missingness
+def analyze_missing_patterns(data):
+    print("Missing data analysis:")
+    print(f"Total missing values: {data.isnull().sum().sum()}")
+
+    # Check if missingness is related to other variables
+    for col in data.columns:
+        if data[col].isnull().any():
+            print(f"\nAnalyzing missingness in {col}:")
+
+            # Check correlation with other missing patterns
+            for other_col in data.columns:
+                if other_col != col and data[other_col].isnull().any():
+                    missing_col = data[col].isnull()
+                    missing_other = data[other_col].isnull()
+                    correlation = missing_col.corr(missing_other)
+                    print(f"  Correlation with {other_col} missingness: {correlation:.3f}")
+
+analyze_missing_patterns(data)
+```
+
+### 2. Validate Imputation Quality
+```python
+# Compare distributions before and after imputation
+def compare_distributions(original, imputed, column):
+    """Compare distributions of original and imputed data"""
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+    # Original distribution (non-missing values)
+    original_clean = original.dropna()
+    axes[0].hist(original_clean[column].dropna(), bins=30, alpha=0.7, color='blue')
+    axes[0].set_title(f'Original Distribution ({column})')
+    axes[0].set_xlabel(column)
+    axes[0].set_ylabel('Frequency')
+
+    # Imputed distribution
+    axes[1].hist(imputed[column], bins=30, alpha=0.7, color='red')
+    axes[1].set_title(f'Imputed Distribution ({column})')
+    axes[1].set_xlabel(column)
+    axes[1].set_ylabel('Frequency')
+
+    plt.tight_layout()
+    plt.show()
+
+# Example usage
+compare_distributions(data, data_imputed, 'income')
+```
+
+### 3. Document Your Approach
+```python
+# Keep track of what you've done
+imputation_log = {
+    'date': '2024-01-01',
+    'original_shape': data.shape,
+    'missing_patterns': data.isnull().sum().to_dict(),
+    'method_applied': 'KNN imputation with k=5',
+    'columns_imputed': ['age', 'income', 'experience'],
+    'validation_performed': True
+}
+
+import json
+with open('imputation_log.json', 'w') as f:
+    json.dump(imputation_log, f, indent=2)
+```
+
+## Choosing the Right Strategy
+
+### Decision Tree for Missing Data Handling
+
+```
+Is the data MCAR?
+├── Yes → Use deletion methods or simple imputation
+└── No → Are there relationships between variables?
+    ├── Yes → Use model-based imputation (KNN, MICE, ML models)
+    └── No → Use advanced imputation or indicator variables
+
+How much data is missing?
+├── < 5% → Deletion is usually safe
+├── 5-15% → Simple imputation methods
+├── 15-50% → Advanced imputation methods
+└── > 50% → Consider if variable is useful, may need to drop
+```
+
+### Algorithm-Specific Recommendations
+
+- **Tree-based models**: Can handle missing values naturally
+- **Linear models**: Require imputation
+- **Neural networks**: Usually require imputation and scaling
+- **Distance-based models**: Require imputation
+
+## Common Pitfalls to Avoid
+
+1. **Always using mean/median imputation**: May not be appropriate for all data
+2. **Ignoring the missing data mechanism**: Can lead to biased results
+3. **Not validating imputation quality**: Should check if imputed values make sense
+4. **Imputing before train/test split**: Can cause data leakage
+5. **Not documenting the process**: Makes results unreproducible
+
+## Summary
+
+Handling missing data effectively requires:
+
+- **Understanding the missing data mechanism** (MCAR, MAR, MNAR)
+- **Choosing appropriate imputation methods** based on data characteristics
+- **Validating the quality** of imputed values
+- **Documenting the entire process** for reproducibility
+- **Considering the impact** on downstream analysis
+
+**Key takeaways**:
+1. **No one-size-fits-all solution**: The best method depends on your data and goals
+2. **More sophisticated isn't always better**: Simple methods can work well
+3. **Always validate**: Check that your imputation makes sense
+4. **Document everything**: Keep track of what you've done
+5. **Consider the context**: Think about why data is missing and how it affects your analysis
+
+The goal is to minimize bias while preserving as much information as possible. When in doubt, try multiple methods and compare results to ensure your conclusions are robust.

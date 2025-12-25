@@ -1,0 +1,272 @@
+---
+sidebar_position: 2
+---
+
+# Data Cleaning
+
+Data cleaning is the process of identifying and correcting errors, inconsistencies, and noise in your dataset. It's often the most time-consuming but critical step in any machine learning project.
+
+## Why Data Cleaning Matters
+
+Real-world data is messy. Before training models, we must:
+
+- **Remove noise** - Random errors and outliers that don't represent true patterns
+- **Handle duplicates** - Repeated entries that can bias our model
+- **Fix inconsistencies** - Different representations of the same value
+- **Address quality issues** - Missing values, incorrect formats, or invalid entries
+
+## Common Data Quality Issues
+
+### 1. Missing Values
+```python
+import pandas as pd
+import numpy as np
+
+# Create sample data with missing values
+data = pd.DataFrame({
+    'age': [25, np.nan, 30, 22, np.nan, 28],
+    'income': [50000, 60000, np.nan, 45000, 52000, np.nan],
+    'city': ['NYC', 'LA', 'Chicago', np.nan, 'Miami', 'Boston']
+})
+
+print("Missing values in each column:")
+print(data.isnull().sum())
+```
+
+### 2. Duplicates
+```python
+# Sample data with duplicates
+data_with_dups = pd.DataFrame({
+    'user_id': [1, 2, 3, 2, 4, 1],
+    'action': ['click', 'view', 'click', 'view', 'click', 'click']
+})
+
+print(f"Original rows: {len(data_with_dups)}")
+print(f"Duplicate rows: {data_with_dups.duplicated().sum()}")
+print(f"After removing duplicates: {len(data_with_dups.drop_duplicates())}")
+```
+
+### 3. Inconsistent Data
+```python
+# Sample data with inconsistent values
+data_inconsistent = pd.DataFrame({
+    'country': ['USA', 'us', 'United States', 'UK', 'england', 'England']
+})
+
+print("Unique country values:")
+print(data_inconsistent['country'].unique())
+```
+
+## Data Cleaning Techniques
+
+### 1. Handling Missing Values
+
+#### Option 1: Remove Missing Data
+```python
+# Remove rows with any missing values
+clean_data = data.dropna()
+
+# Remove rows where specific columns are missing
+clean_data = data.dropna(subset=['age', 'income'])
+```
+
+#### Option 2: Fill Missing Values
+```python
+# Fill with mean (for numerical data)
+data['age'].fillna(data['age'].mean(), inplace=True)
+
+# Fill with median (more robust to outliers)
+data['income'].fillna(data['income'].median(), inplace=True)
+
+# Fill with mode (for categorical data)
+data['city'].fillna(data['city'].mode()[0], inplace=True)
+
+# Forward fill (use previous value)
+data['age'].fillna(method='ffill', inplace=True)
+```
+
+#### Option 3: Advanced Imputation
+```python
+from sklearn.impute import KNNImputer
+from sklearn.preprocessing import LabelEncoder
+
+# Prepare data for KNN imputation
+numeric_data = data[['age', 'income']].copy()
+
+# Apply KNN imputation
+imputer = KNNImputer(n_neighbors=3)
+data_imputed = imputer.fit_transform(numeric_data)
+
+# Convert back to DataFrame
+data['age'] = data_imputed[:, 0]
+data['income'] = data_imputed[:, 1]
+```
+
+### 2. Removing Duplicates
+
+```python
+# Remove duplicate rows
+clean_data = data.drop_duplicates()
+
+# Remove duplicates based on specific columns
+clean_data = data.drop_duplicates(subset=['user_id', 'action'], keep='first')
+
+# Keep only the last occurrence
+clean_data = data.drop_duplicates(keep='last')
+```
+
+### 3. Fixing Data Inconsistencies
+
+```python
+# Standardize text case
+data['country'] = data['country'].str.lower()
+
+# Replace inconsistent values
+country_map = {
+    'us': 'usa',
+    'united states': 'usa',
+    'england': 'uk',
+    'united kingdom': 'uk'
+}
+data['country'] = data['country'].replace(country_map)
+
+# Standardize date formats
+data['date'] = pd.to_datetime(data['date'], errors='coerce')
+```
+
+### 4. Outlier Detection and Treatment
+
+```python
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Identify outliers using IQR method
+def detect_outliers_iqr(data, column):
+    Q1 = data[column].quantile(0.25)
+    Q3 = data[column].quantile(0.75)
+    IQR = Q3 - Q1
+
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    return data[(data[column] < lower_bound) | (data[column] > upper_bound)]
+
+# Detect outliers in income
+outliers = detect_outliers_iqr(data, 'income')
+print(f"Number of outliers: {len(outliers)}")
+
+# Remove outliers
+clean_data = data[~data.index.isin(outliers.index)]
+
+# Or cap outliers at bounds
+data['income'] = np.clip(data['income'],
+                       data['income'].quantile(0.05),
+                       data['income'].quantile(0.95))
+```
+
+## Interactive Data Cleaning Exercise
+
+Let's work with a real dataset to practice these techniques:
+
+```python
+# Load a sample dataset
+from sklearn.datasets import load_boston
+import pandas as pd
+
+# Create a messy version of the Boston housing dataset
+boston = load_boston()
+df = pd.DataFrame(boston.data, columns=boston.feature_names)
+df['PRICE'] = boston.target
+
+# Add some noise and missing values
+import numpy as np
+np.random.seed(42)
+
+# Add missing values (10% of data)
+missing_indices = np.random.choice(len(df), size=int(0.1 * len(df)), replace=False)
+df.loc[missing_indices, 'CRIM'] = np.nan
+
+# Add duplicates
+df = pd.concat([df, df.iloc[:10]], ignore_index=True)
+
+# Add outliers
+df.loc[np.random.choice(len(df), 5), 'PRICE'] = df['PRICE'].max() * 3
+
+print(f"Original dataset shape: {boston.data.shape}")
+print(f"Modified dataset shape: {df.shape}")
+print(f"Missing values in CRIM: {df['CRIM'].isnull().sum()}")
+print(f"Duplicate rows: {df.duplicated().sum()}")
+```
+
+## Best Practices
+
+### 1. Always Document Your Cleaning Steps
+```python
+# Keep track of what you've done
+cleaning_log = []
+
+# Log missing value handling
+cleaning_log.append(f"Filled {data['age'].isnull().sum()} missing age values with mean")
+
+# Log outlier removal
+cleaning_log.append(f"Removed {len(df) - len(clean_data)} outlier rows")
+
+# Save the log for reproducibility
+with open('data_cleaning_log.txt', 'w') as f:
+    for step in cleaning_log:
+        f.write(step + '\n')
+```
+
+### 2. Validate Your Results
+```python
+# Check data quality after cleaning
+print("=== Data Quality Report ===")
+print(f"Total rows: {len(clean_data)}")
+print(f"Missing values: {clean_data.isnull().sum().sum()}")
+print(f"Duplicates: {clean_data.duplicated().sum()}")
+print(f"Data types:\n{clean_data.dtypes}")
+
+# Visualize before and after
+import matplotlib.pyplot as plt
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+# Before cleaning
+data['income'].hist(bins=30, alpha=0.7, ax=ax1, title='Before Cleaning')
+ax1.set_title('Income Distribution (Before)')
+
+# After cleaning
+clean_data['income'].hist(bins=30, alpha=0.7, ax=ax2, title='After Cleaning')
+ax2.set_title('Income Distribution (After)')
+
+plt.tight_layout()
+plt.show()
+```
+
+### 3. Consider the Business Context
+- **Missing values**: Are they missing at random or is there a pattern?
+- **Outliers**: Are they errors or legitimate extreme cases?
+- **Duplicates**: Are they truly duplicate records or multiple valid entries?
+
+## Common Pitfalls to Avoid
+
+1. **Removing too much data**: Be conservative with deletion
+2. **Over-imputing**: Don't fill missing values without understanding why they're missing
+3. **Ignoring data types**: Ensure proper data types for each column
+4. **Not validating results**: Always check that your cleaning actually improved the data
+
+## Next Steps
+
+After cleaning your data, you're ready to move on to **[Feature Engineering](./feature-engineering.mdx)**, where we'll learn how to create new features and transform existing ones to improve model performance.
+
+## Summary
+
+Data cleaning is essential for building reliable machine learning models. By systematically identifying and addressing:
+- Missing values (through removal, imputation, or advanced techniques)
+- Duplicate records (through identification and removal)
+- Inconsistent data (through standardization and mapping)
+- Outliers (through detection and appropriate treatment)
+
+You'll ensure your data is ready for the next stages of the machine learning pipeline.
+
+Remember: **Clean data leads to better models!**

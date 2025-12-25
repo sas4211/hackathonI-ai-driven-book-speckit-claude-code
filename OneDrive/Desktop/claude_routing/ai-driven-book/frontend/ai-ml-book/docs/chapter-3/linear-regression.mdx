@@ -1,0 +1,614 @@
+---
+sidebar_position: 2
+---
+
+# Linear Regression
+
+Linear Regression is one of the most fundamental and widely used supervised learning algorithms. It's the foundation for understanding how machines can learn relationships between variables and make predictions.
+
+## What is Linear Regression?
+
+Linear Regression models the relationship between a dependent variable (target) and one or more independent variables (features) by fitting a linear equation to observed data.
+
+### The Mathematical Foundation
+
+The basic equation for linear regression is:
+
+**Simple Linear Regression:**
+```
+y = β₀ + β₁x + ε
+```
+
+**Multiple Linear Regression:**
+```
+y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ + ε
+```
+
+Where:
+- **y**: Target variable (what we want to predict)
+- **x, x₁, x₂, ...**: Independent variables (features)
+- **β₀**: Intercept (value of y when all x's are 0)
+- **β₁, β₂, ...**: Coefficients (slope of the line)
+- **ε**: Error term (difference between predicted and actual values)
+
+## Types of Linear Regression
+
+### 1. Simple Linear Regression
+Models the relationship between **one** independent variable and one dependent variable.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Generate sample data
+np.random.seed(42)
+X = np.random.rand(100, 1) * 10
+y = 2.5 * X.flatten() + 1.5 + np.random.randn(100) * 2
+
+# Create and train the model
+model = LinearRegression()
+model.fit(X, y)
+
+# Make predictions
+y_pred = model.predict(X)
+
+# Visualize results
+plt.figure(figsize=(10, 6))
+plt.scatter(X, y, alpha=0.6, label='Data points')
+plt.plot(X, y_pred, color='red', linewidth=2, label=f'Linear fit: y = {model.coef_[0]:.2f}x + {model.intercept_:.2f}')
+plt.xlabel('Independent Variable (X)')
+plt.ylabel('Dependent Variable (y)')
+plt.title('Simple Linear Regression')
+plt.legend()
+plt.show()
+
+print(f"Model equation: y = {model.coef_[0]:.2f}x + {model.intercept_:.2f}")
+```
+
+### 2. Multiple Linear Regression
+Models the relationship between **multiple** independent variables and one dependent variable.
+
+```python
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Generate multi-dimensional data
+X, y = make_regression(n_samples=1000, n_features=5, noise=0.1, random_state=42)
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse:.2f}")
+print(f"R² Score: {r2:.3f}")
+print(f"Coefficients: {model.coef_}")
+print(f"Intercept: {model.intercept_:.2f}")
+
+# Feature importance visualization
+feature_names = [f'Feature {i+1}' for i in range(X.shape[1])]
+plt.figure(figsize=(10, 6))
+plt.bar(feature_names, model.coef_)
+plt.title('Feature Coefficients in Multiple Linear Regression')
+plt.ylabel('Coefficient Value')
+plt.xticks(rotation=45)
+plt.show()
+```
+
+## The Mathematics Behind Linear Regression
+
+### Ordinary Least Squares (OLS)
+
+Linear regression finds the best-fitting line by minimizing the sum of squared residuals:
+
+```
+Minimize: Σ(yᵢ - ŷᵢ)² = Σ(yᵢ - (β₀ + β₁xᵢ))²
+```
+
+Where ŷᵢ is the predicted value and yᵢ is the actual value.
+
+### Gradient Descent Implementation
+
+```python
+class LinearRegressionGD:
+    def __init__(self, learning_rate=0.01, epochs=1000):
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        self.costs = []
+
+    def fit(self, X, y):
+        # Add bias term
+        X_b = np.c_[np.ones((X.shape[0], 1)), X]
+
+        # Initialize parameters
+        self.theta = np.random.randn(X_b.shape[1])
+
+        # Gradient descent
+        for i in range(self.epochs):
+            # Forward pass
+            y_pred = X_b.dot(self.theta)
+
+            # Calculate cost
+            cost = (1/(2*m)) * np.sum((y_pred - y) ** 2)
+            self.costs.append(cost)
+
+            # Calculate gradients
+            gradients = (1/m) * X_b.T.dot(y_pred - y)
+
+            # Update parameters
+            self.theta = self.theta - self.learning_rate * gradients
+
+    def predict(self, X):
+        X_b = np.c_[np.ones((X.shape[0], 1)), X]
+        return X_b.dot(self.theta)
+
+# Example usage
+X_simple = np.random.rand(100, 1) * 10
+y_simple = 2 * X_simple.flatten() + 1 + np.random.randn(100)
+
+# Train our custom model
+lr_gd = LinearRegressionGD(learning_rate=0.01, epochs=1000)
+lr_gd.fit(X_simple, y_simple)
+y_pred_gd = lr_gd.predict(X_simple)
+
+# Compare with sklearn
+lr_sklearn = LinearRegression()
+lr_sklearn.fit(X_simple, y_simple)
+
+print("Custom model coefficients:", lr_gd.theta)
+print("Sklearn coefficients:", [lr_sklearn.intercept_, lr_sklearn.coef_[0]])
+
+# Plot convergence
+plt.figure(figsize=(10, 5))
+
+plt.subplot(1, 2, 1)
+plt.plot(lr_gd.costs)
+plt.title('Cost Function Convergence')
+plt.xlabel('Epochs')
+plt.ylabel('Cost')
+
+plt.subplot(1, 2, 2)
+plt.scatter(X_simple, y_simple, alpha=0.6)
+plt.plot(X_simple, y_pred_gd, 'r-', label='Custom GD')
+plt.plot(X_simple, lr_sklearn.predict(X_simple), 'g--', label='Sklearn')
+plt.legend()
+plt.title('Linear Regression Comparison')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Evaluating Linear Regression Models
+
+### Key Metrics
+
+1. **Mean Squared Error (MSE)**
+2. **Root Mean Squared Error (RMSE)**
+3. **Mean Absolute Error (MAE)**
+4. **R-squared (R²)**
+5. **Adjusted R-squared**
+
+```python
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+def evaluate_regression(y_true, y_pred):
+    """Evaluate regression model performance"""
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+
+    print(f"Mean Squared Error (MSE): {mse:.4f}")
+    print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+    print(f"Mean Absolute Error (MAE): {mae:.4f}")
+    print(f"R-squared (R²): {r2:.4f}")
+
+    return {'MSE': mse, 'RMSE': rmse, 'MAE': mae, 'R2': r2}
+
+# Example evaluation
+eval_metrics = evaluate_regression(y_test, y_pred)
+```
+
+### Residual Analysis
+
+Residuals are the differences between observed and predicted values. They should be randomly distributed.
+
+```python
+import seaborn as sns
+
+# Calculate residuals
+residuals = y_test - y_pred
+
+# Residual plot
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.scatter(y_pred, residuals, alpha=0.6)
+plt.axhline(y=0, color='red', linestyle='--')
+plt.xlabel('Predicted Values')
+plt.ylabel('Residuals')
+plt.title('Residuals vs Predicted Values')
+
+plt.subplot(1, 3, 2)
+sns.histplot(residuals, kde=True)
+plt.xlabel('Residuals')
+plt.ylabel('Frequency')
+plt.title('Distribution of Residuals')
+
+plt.subplot(1, 3, 3)
+import scipy.stats as stats
+stats.probplot(residuals, dist="norm", plot=plt)
+plt.title('Q-Q Plot of Residuals')
+
+plt.tight_layout()
+plt.show()
+
+# Check for normality
+from scipy import stats
+statistic, p_value = stats.shapiro(residuals)
+print(f"Shapiro-Wilk test p-value: {p_value:.4f}")
+if p_value > 0.05:
+    print("✅ Residuals appear to be normally distributed")
+else:
+    print("❌ Residuals may not be normally distributed")
+```
+
+## Assumptions of Linear Regression
+
+Linear regression makes several key assumptions:
+
+### 1. Linearity
+The relationship between features and target is linear.
+
+```python
+# Check linearity with scatter plots
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+axes = axes.ravel()
+
+for i in range(X.shape[1]):
+    axes[i].scatter(X[:, i], y, alpha=0.5)
+    axes[i].set_xlabel(f'Feature {i+1}')
+    axes[i].set_ylabel('Target')
+    axes[i].set_title(f'Feature {i+1} vs Target')
+
+# Remove empty subplots
+for i in range(X.shape[1], len(axes)):
+    fig.delaxes(axes[i])
+
+plt.tight_layout()
+plt.show()
+```
+
+### 2. Independence
+Observations are independent of each other.
+
+### 3. Homoscedasticity
+The variance of residuals is constant across all levels of the independent variables.
+
+### 4. Normality
+Residuals are normally distributed (for inference).
+
+### 5. No Multicollinearity
+Independent variables are not highly correlated with each other.
+
+```python
+# Check multicollinearity using correlation matrix
+correlation_matrix = np.corrcoef(X_train.T)
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
+plt.title('Feature Correlation Matrix')
+plt.show()
+
+# Calculate Variance Inflation Factor (VIF)
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+def calculate_vif(X):
+    vif = pd.DataFrame()
+    vif["variables"] = [f'Feature_{i}' for i in range(X.shape[1])]
+    vif["VIF"] = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
+    return vif
+
+vif_df = calculate_vif(X_train)
+print("Variance Inflation Factors:")
+print(vif_df)
+
+print("\nInterpretation:")
+print("- VIF = 1: No correlation")
+print("- 1 < VIF < 5: Moderate correlation")
+print("- VIF > 5: High correlation (consider removing)")
+```
+
+## Regularization Techniques
+
+To prevent overfitting, we can use regularization:
+
+### 1. Ridge Regression (L2 Regularization)
+
+```python
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import validation_curve
+
+# Ridge regression with different alpha values
+alphas = np.logspace(-4, 4, 20)
+train_scores, val_scores = validation_curve(
+    Ridge(), X_train, y_train, param_name='alpha', param_range=alphas,
+    cv=5, scoring='neg_mean_squared_error'
+)
+
+train_mean = -train_scores.mean(axis=1)
+val_mean = -val_scores.mean(axis=1)
+
+plt.figure(figsize=(10, 6))
+plt.semilogx(alphas, train_mean, 'b-', label='Training Error')
+plt.semilogx(alphas, val_mean, 'r-', label='Validation Error')
+plt.xlabel('Alpha (Regularization Strength)')
+plt.ylabel('Mean Squared Error')
+plt.title('Ridge Regression: Regularization Effect')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Find optimal alpha
+optimal_alpha = alphas[np.argmin(val_mean)]
+print(f"Optimal alpha: {optimal_alpha:.4f}")
+
+# Train final model
+ridge_model = Ridge(alpha=optimal_alpha)
+ridge_model.fit(X_train, y_train)
+ridge_pred = ridge_model.predict(X_test)
+
+print(f"Ridge Regression R²: {r2_score(y_test, ridge_pred):.3f}")
+```
+
+### 2. Lasso Regression (L1 Regularization)
+
+```python
+from sklearn.linear_model import Lasso
+
+# Lasso regression
+lasso_model = Lasso(alpha=0.1)
+lasso_model.fit(X_train, y_train)
+lasso_pred = lasso_model.predict(X_test)
+
+print(f"Lasso Regression R²: {r2_score(y_test, lasso_pred):.3f}")
+print(f"Number of features used: {np.sum(lasso_model.coef_ != 0)}")
+print(f"Feature coefficients: {lasso_model.coef_}")
+
+# Feature selection visualization
+plt.figure(figsize=(10, 6))
+plt.bar(range(len(lasso_model.coef_)), lasso_model.coef_)
+plt.xlabel('Feature Index')
+plt.ylabel('Coefficient Value')
+plt.title('Lasso Regression Coefficients (Feature Selection)')
+plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+plt.show()
+```
+
+### 3. Elastic Net
+
+```python
+from sklearn.linear_model import ElasticNet
+
+# Elastic Net combines L1 and L2 regularization
+elastic_model = ElasticNet(alpha=0.1, l1_ratio=0.5)  # 50% L1, 50% L2
+elastic_model.fit(X_train, y_train)
+elastic_pred = elastic_model.predict(X_test)
+
+print(f"Elastic Net R²: {r2_score(y_test, elastic_pred):.3f}")
+print(f"Coefficients: {elastic_model.coef_}")
+```
+
+## Practical Applications
+
+### Real-World Example: House Price Prediction
+
+```python
+from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import StandardScaler
+
+# Load California housing dataset
+housing = fetch_california_housing()
+X_housing, y_housing = housing.data, housing.target
+
+# Split data
+X_train_h, X_test_h, y_train_h, y_test_h = train_test_split(
+    X_housing, y_housing, test_size=0.2, random_state=42
+)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train_h)
+X_test_scaled = scaler.transform(X_test_h)
+
+# Train multiple models
+models = {
+    'Linear Regression': LinearRegression(),
+    'Ridge Regression': Ridge(alpha=1.0),
+    'Lasso Regression': Lasso(alpha=0.1),
+    'Elastic Net': ElasticNet(alpha=0.1, l1_ratio=0.5)
+}
+
+results = {}
+for name, model in models.items():
+    model.fit(X_train_scaled, y_train_h)
+    y_pred = model.predict(X_test_scaled)
+
+    results[name] = {
+        'R²': r2_score(y_test_h, y_pred),
+        'RMSE': np.sqrt(mean_squared_error(y_test_h, y_pred)),
+        'MAE': mean_absolute_error(y_test_h, y_pred)
+    }
+
+    print(f"{name}:")
+    print(f"  R² Score: {results[name]['R²']:.3f}")
+    print(f"  RMSE: ${results[name]['RMSE']:.2f}k")
+    print(f"  MAE: ${results[name]['MAE']:.2f}k")
+    print()
+
+# Compare models
+model_names = list(results.keys())
+r2_scores = [results[name]['R²'] for name in model_names]
+rmse_scores = [results[name]['RMSE'] for name in model_names]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+ax1.bar(model_names, r2_scores, color=['blue', 'green', 'orange', 'red'])
+ax1.set_ylabel('R² Score')
+ax1.set_title('Model Comparison: R² Score')
+ax1.tick_params(axis='x', rotation=45)
+
+ax2.bar(model_names, rmse_scores, color=['blue', 'green', 'orange', 'red'])
+ax2.set_ylabel('RMSE ($k)')
+ax2.set_title('Model Comparison: RMSE')
+ax2.tick_params(axis='x', rotation=45)
+
+plt.tight_layout()
+plt.show()
+```
+
+### Feature Importance Analysis
+
+```python
+# Analyze feature importance in the best model
+best_model = Ridge(alpha=1.0)
+best_model.fit(X_train_scaled, y_train_h)
+
+feature_names = housing.feature_names
+feature_importance = np.abs(best_model.coef_)
+
+# Create DataFrame for better visualization
+importance_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Importance': feature_importance
+}).sort_values('Importance', ascending=False)
+
+plt.figure(figsize=(10, 6))
+sns.barplot(data=importance_df, x='Importance', y='Feature')
+plt.title('Feature Importance in California Housing Price Prediction')
+plt.xlabel('Absolute Coefficient Value')
+plt.show()
+
+print("Top 5 most important features:")
+print(importance_df.head())
+```
+
+## Advanced Topics
+
+### Polynomial Features
+
+Linear regression can model non-linear relationships by adding polynomial features:
+
+```python
+from sklearn.preprocessing import PolynomialFeatures
+
+# Generate non-linear data
+X_poly = np.linspace(0, 3, 100).reshape(-1, 1)
+y_poly = 0.5 * X_poly.flatten()**2 + 2 * X_poly.flatten() + 1 + np.random.randn(100) * 0.5
+
+# Polynomial features
+poly_features = PolynomialFeatures(degree=2, include_bias=False)
+X_poly_features = poly_features.fit_transform(X_poly)
+
+# Train linear regression on polynomial features
+poly_model = LinearRegression()
+poly_model.fit(X_poly_features, y_poly)
+
+# Make predictions
+X_plot = np.linspace(0, 3, 100).reshape(-1, 1)
+X_plot_poly = poly_features.transform(X_plot)
+y_plot = poly_model.predict(X_plot_poly)
+
+# Visualize
+plt.figure(figsize=(10, 6))
+plt.scatter(X_poly, y_poly, alpha=0.6, label='Data')
+plt.plot(X_plot, y_plot, 'r-', label='Polynomial Regression (degree=2)')
+plt.xlabel('X')
+plt.ylabel('y')
+plt.title('Polynomial Regression')
+plt.legend()
+plt.show()
+
+print("Polynomial coefficients:")
+for i, coef in enumerate(poly_model.coef_):
+    print(f"  x^{i+1}: {coef:.3f}")
+print(f"Intercept: {poly_model.intercept_:.3f}")
+```
+
+### Cross-Validation for Model Selection
+
+```python
+from sklearn.model_selection import cross_val_score, GridSearchCV
+
+# Hyperparameter tuning with GridSearchCV
+param_grid = {
+    'alpha': np.logspace(-4, 2, 20),
+    'fit_intercept': [True, False]
+}
+
+ridge_grid = GridSearchCV(Ridge(), param_grid, cv=5, scoring='neg_mean_squared_error')
+ridge_grid.fit(X_train_scaled, y_train_h)
+
+print("Best parameters:", ridge_grid.best_params_)
+print("Best cross-validation score:", -ridge_grid.best_score_)
+
+# Evaluate on test set
+best_ridge = ridge_grid.best_estimator_
+test_score = best_ridge.score(X_test_scaled, y_test_h)
+print(f"Test R² score: {test_score:.3f}")
+```
+
+## Common Pitfalls and Solutions
+
+### 1. Overfitting
+**Problem**: Model performs well on training data but poorly on new data.
+**Solution**: Use regularization, cross-validation, and feature selection.
+
+### 2. Underfitting
+**Problem**: Model is too simple to capture the underlying patterns.
+**Solution**: Add more features, use polynomial features, or try more complex models.
+
+### 3. Multicollinearity
+**Problem**: Features are highly correlated, making coefficient interpretation difficult.
+**Solution**: Use Ridge regression, remove correlated features, or use PCA.
+
+### 4. Outliers
+**Problem**: Extreme values can heavily influence the regression line.
+**Solution**: Use Robust regression methods or remove outliers.
+
+```python
+from sklearn.linear_model import HuberRegressor, RANSACRegressor
+
+# Robust regression methods
+robust_models = {
+    'Huber Regressor': HuberRegressor(),
+    'RANSAC Regressor': RANSACRegressor(random_state=42)
+}
+
+for name, model in robust_models.items():
+    model.fit(X_train_scaled, y_train_h)
+    y_pred = model.predict(X_test_scaled)
+    print(f"{name} R²: {r2_score(y_test_h, y_pred):.3f}")
+```
+
+## Key Takeaways
+
+1. **Linear regression is interpretable** - coefficients have clear meanings
+2. **Assumptions matter** - check linearity, independence, homoscedasticity, normality
+3. **Regularization helps** - Ridge, Lasso, and Elastic Net prevent overfitting
+4. **Feature scaling is important** - especially for regularization methods
+5. **Cross-validation is essential** - for model selection and hyperparameter tuning
+6. **Residual analysis reveals issues** - check for patterns in residuals
+7. **Polynomial features extend capabilities** - can model non-linear relationships
+
+Linear regression may seem simple, but mastering it provides the foundation for understanding more complex machine learning algorithms. Its interpretability and mathematical clarity make it an invaluable tool in any data scientist's toolkit.

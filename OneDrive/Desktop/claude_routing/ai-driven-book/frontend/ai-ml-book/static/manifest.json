@@ -1,0 +1,23 @@
+{
+  "name": "AI & ML Interactive Book",
+  "short_name": "AI-ML Book",
+  "description": "Learn AI & Machine Learning with interactive examples and AI-powered assistance",
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "img/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

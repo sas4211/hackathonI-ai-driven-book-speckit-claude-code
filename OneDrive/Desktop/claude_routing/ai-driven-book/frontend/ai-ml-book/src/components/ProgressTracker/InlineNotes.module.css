@@ -1,0 +1,389 @@
+/* Inline Notes Component Styles */
+
+.inlineNotes {
+  position: relative;
+  margin: 1rem 0;
+}
+
+.notesContainer {
+  background: var(--ifm-background-color, #f9fafb);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.notesContainer h4 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+  font-size: 1rem;
+}
+
+.noteCard {
+  background: white;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.noteContent {
+  margin-bottom: 0.5rem;
+}
+
+.noteContent p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-800, #4b5563);
+  line-height: 1.5;
+}
+
+.noteActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.editBtn,
+.deleteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.editBtn:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.deleteBtn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.noteMeta {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.noteTimestamp {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600, #666);
+}
+
+/* Note Form Styles */
+.addNoteSection {
+  margin-top: 1rem;
+}
+
+.addNoteBtn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.addNoteBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.noteForm {
+  background: white;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.noteTextarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.noteTextarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.formActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.saveNoteBtn,
+.cancelNoteBtn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.9rem;
+}
+
+.saveNoteBtn {
+  background: #10b981;
+  color: white;
+}
+
+.cancelNoteBtn {
+  background: #ef4444;
+  color: white;
+}
+
+.saveNoteBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.cancelNoteBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Editing Note Styles */
+.editingNote {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.editTextarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.editActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.saveEditBtn,
+.cancelEditBtn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.9rem;
+}
+
+.saveEditBtn {
+  background: #10b981;
+  color: white;
+}
+
+.cancelEditBtn {
+  background: #ef4444;
+  color: white;
+}
+
+/* Context Info */
+.contextInfo {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.chapterTag,
+.sectionTag {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  background: var(--ifm-background-color, #f9fafb);
+  color: var(--ifm-color-emphasis-700, #666);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+}
+
+.chapterTag {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .inlineNotes {
+    margin: 0.75rem 0;
+  }
+
+  .notesContainer {
+    padding: 0.75rem;
+  }
+
+  .noteCard {
+    padding: 0.75rem;
+  }
+
+  .noteForm {
+    padding: 0.75rem;
+  }
+
+  .formActions,
+  .editActions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .saveNoteBtn,
+  .cancelNoteBtn,
+  .saveEditBtn,
+  .cancelEditBtn {
+    width: 100%;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .notesContainer {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .notesContainer h4 {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .noteCard {
+    background: var(--ifm-background-surface-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .noteContent p {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .noteTimestamp {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .noteForm {
+    background: var(--ifm-background-surface-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .noteTextarea {
+    background: var(--ifm-background-color, #111827);
+    border-color: var(--ifm-toc-border-color, #374151);
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .noteTextarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+
+  .editingNote {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .editTextarea {
+    background: var(--ifm-background-color, #111827);
+    border-color: var(--ifm-toc-border-color, #374151);
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .editTextarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+
+  .chapterTag {
+    background: var(--ifm-background-color, #1f2937);
+    color: #93c5fd;
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .sectionTag {
+    background: var(--ifm-background-color, #1f2937);
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .noteCard,
+  .noteForm {
+    border-width: 2px;
+  }
+
+  .noteTextarea,
+  .editTextarea {
+    border-width: 2px;
+  }
+
+  .chapterTag,
+  .sectionTag {
+    border-width: 2px;
+  }
+}
+
+/* Animation for smooth transitions */
+.noteCard {
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus styles for accessibility */
+.noteTextarea:focus,
+.editTextarea:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.editBtn:focus,
+.deleteBtn:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}

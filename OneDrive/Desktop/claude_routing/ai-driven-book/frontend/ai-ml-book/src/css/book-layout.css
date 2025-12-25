@@ -1,0 +1,135 @@
+/* Book-specific layout styles */
+
+.book-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.book-sidebar {
+  position: sticky;
+  top: 80px;
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  background: var(--ifm-background-color);
+  border-right: 1px solid var(--ifm-toc-border-color);
+}
+
+.book-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.book-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--ifm-color-primary);
+  transform-origin: 0%;
+  z-index: 9999;
+}
+
+.reading-container {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  min-height: calc(100vh - 200px);
+}
+
+.article-content {
+  flex: 1;
+  max-width: 800px;
+}
+
+.chapter-navigation {
+  width: 300px;
+  position: sticky;
+  top: 120px;
+  padding: 1rem;
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chapter-navigation::before {
+  content: 'Table of Contents';
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.chapter-nav-item {
+  display: block;
+  padding: 0.5rem 0;
+  border: none;
+  background: none;
+  text-align: left;
+  width: 100%;
+  color: var(--ifm-font-color-base);
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.chapter-nav-item:hover {
+  background-color: var(--ifm-hover-overlay);
+}
+
+.chapter-nav-item.active {
+  background-color: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-primary);
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .book-container {
+    padding: 0 0.5rem;
+  }
+
+  .reading-container {
+    flex-direction: column;
+  }
+
+  .chapter-navigation {
+    width: auto;
+    position: static;
+    margin-bottom: 2rem;
+  }
+
+  .book-content {
+    padding: 1rem;
+  }
+}
+
+.code-example {
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-example pre {
+  margin: 0;
+  border-radius: 0;
+}
+
+.interactive-element {
+  border: 2px solid var(--ifm-color-primary);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+}
+
+.math-equation {
+  text-align: center;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: var(--ifm-color-emphasis-100);
+  border-radius: 8px;
+}

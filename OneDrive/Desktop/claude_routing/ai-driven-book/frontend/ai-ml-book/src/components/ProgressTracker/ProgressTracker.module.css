@@ -1,0 +1,201 @@
+/* ProgressTracker styles */
+.progressTracker {
+  background: var(--ifm-background-surface-color, #fff);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin: 1rem 0;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progressHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ifm-heading-color, var(--ifm-title-color, var(--ifm-text-color)));
+}
+
+.completionBadge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.progressBar {
+  background-color: var(--ifm-color-emphasis-200, #f3f4f6);
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+  border-radius: 999px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progressDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.detailItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: var(--ifm-background-color, #f9fafb);
+  border-radius: 12px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+}
+
+.detailLabel {
+  color: var(--ifm-color-emphasis-700, #6b7280);
+  font-size: 0.9rem;
+}
+
+.detailValue {
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-900, #111827);
+}
+
+.progressActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.resetButton {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.resetButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.resetButton:active {
+  transform: translateY(0);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .progressTracker {
+    background-color: var(--ifm-background-surface-color, #111827);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .progressHeader h3 {
+    color: var(--ifm-heading-color, var(--ifm-title-color, var(--ifm-text-color)));
+  }
+
+  .detailItem {
+    background-color: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .detailLabel {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .detailValue {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .progressTracker {
+    padding: 1rem;
+  }
+
+  .progressHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .progressDetails {
+    gap: 0.5rem;
+  }
+
+  .detailItem {
+    padding: 0.5rem;
+  }
+}
+
+/* Animation for progress fill */
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--target-width, 0);
+  }
+}
+
+.progressFill.animate {
+  animation: progressFill 0.5s ease-out;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .progressFill {
+    transition: none;
+  }
+
+  .resetButton {
+    transition: none;
+  }
+
+  .resetButton:hover {
+    transform: none;
+  }
+}
+
+/* Focus visible support */
+.resetButton:focus-visible {
+  outline: 2px solid var(--ifm-color-primary, #667eea);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .progressTracker {
+    border-width: 2px;
+  }
+
+  .progressFill {
+    box-shadow: none;
+    border: 2px solid var(--ifm-color-primary, #667eea);
+  }
+
+  .resetButton {
+    border: 2px solid white;
+    box-shadow: none;
+  }
+}

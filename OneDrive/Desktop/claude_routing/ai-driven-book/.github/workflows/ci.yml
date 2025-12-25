@@ -1,0 +1,135 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_aibook
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      working-directory: ./ai-interactive-book/backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio httpx
+        pip install -r requirements.txt
+
+    - name: Run backend tests
+      working-directory: ./ai-interactive-book/backend
+      env:
+        DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_aibook
+        REDIS_URL: redis://localhost:6379
+        ENVIRONMENT: test
+      run: |
+        pytest tests/ -v --tb=short
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ai-interactive-book/frontend/ai-ml-book/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./ai-interactive-book/frontend/ai-ml-book
+      run: npm ci
+
+    - name: Run type checking
+      working-directory: ./ai-interactive-book/frontend/ai-ml-book
+      run: npm run typecheck
+
+    - name: Build frontend
+      working-directory: ./ai-interactive-book/frontend/ai-ml-book
+      run: npm run build
+
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Python linting tools
+      run: pip install flake8 black isort
+
+    - name: Python linting
+      working-directory: ./ai-interactive-book/backend
+      run: |
+        flake8 src/ --max-line-length=88
+        black --check src/
+        isort --check-only src/
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ai-interactive-book/frontend/ai-ml-book/package-lock.json
+
+    - name: Install frontend dependencies
+      working-directory: ./ai-interactive-book/frontend/ai-ml-book
+      run: npm ci
+
+    - name: Frontend linting
+      working-directory: ./ai-interactive-book/frontend/ai-ml-book
+      run: npm run lint

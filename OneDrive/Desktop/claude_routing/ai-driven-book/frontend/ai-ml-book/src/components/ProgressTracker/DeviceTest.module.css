@@ -1,0 +1,413 @@
+/* Device Test Component Styles */
+
+.deviceTest {
+  background: var(--ifm-background-surface-color, #fff);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.testHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.testHeader h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--ifm-heading-color, var(--ifm-title-color, var(--ifm-text-color)));
+}
+
+.testHeader p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-600, #666);
+  font-style: italic;
+}
+
+/* Device Information */
+.deviceInfo {
+  background: var(--ifm-background-color, #f9fafb);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.deviceInfo h4 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600, #666);
+  font-weight: 600;
+}
+
+.value {
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+/* Test Controls */
+.testControls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.runTestsBtn,
+.refreshInfoBtn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.runTestsBtn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.runTestsBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(102, 126, 234, 0.3);
+}
+
+.runTestsBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.refreshInfoBtn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+}
+
+.refreshInfoBtn:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+/* Test Results */
+.testResults {
+  margin-bottom: 2rem;
+}
+
+.testResults h4 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.resultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.resultItem {
+  background: white;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.resultItem:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.resultHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.statusIndicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.testName {
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-900, #333);
+  flex: 1;
+}
+
+.statusBadge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusBadge.pass {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusBadge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusBadge.fail {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.resultDetails {
+  color: var(--ifm-color-emphasis-800, #4b5563);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.resultTime {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600, #666);
+}
+
+/* Test Summary */
+.testSummary {
+  background: var(--ifm-background-color, #f9fafb);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.summaryStats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700, #666);
+  background: white;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+}
+
+/* Recommendations */
+.recommendations {
+  background: var(--ifm-background-color, #f9fafb);
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.recommendations h4 {
+  margin: 0 0 1rem 0;
+  color: var(--ifm-color-emphasis-900, #333);
+}
+
+.recommendationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.recommendation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--ifm-toc-border-color, #e5e5e5);
+}
+
+.recType {
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .deviceTest {
+    padding: 1rem;
+  }
+
+  .testControls {
+    flex-direction: column;
+  }
+
+  .resultHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .summaryStats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .recommendation {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .deviceInfo {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .deviceInfo h4 {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .infoItem {
+    background: var(--ifm-background-surface-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .label {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .value {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .resultItem {
+    background: var(--ifm-background-surface-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .resultHeader:hover {
+    transform: none;
+  }
+
+  .testName {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .resultDetails {
+    color: var(--ifm-color-emphasis-200, #cbd5e1);
+  }
+
+  .resultTime {
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .testSummary {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .stat {
+    background: var(--ifm-background-surface-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+
+  .recommendations {
+    background: var(--ifm-background-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .recommendations h4 {
+    color: var(--ifm-color-emphasis-100, #e5e7eb);
+  }
+
+  .recommendation {
+    background: var(--ifm-background-surface-color, #1f2937);
+    border-color: var(--ifm-toc-border-color, #374151);
+  }
+
+  .recType {
+    background: var(--ifm-background-color, #111827);
+    color: var(--ifm-color-emphasis-400, #9ca3af);
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .infoItem,
+  .resultItem,
+  .recommendation {
+    border-width: 2px;
+  }
+
+  .deviceInfo,
+  .testSummary,
+  .recommendations {
+    border-width: 2px;
+  }
+}
+
+/* Animation for test results */
+.resultsList {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading states */
+.runTestsBtn:disabled {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.6; }
+}

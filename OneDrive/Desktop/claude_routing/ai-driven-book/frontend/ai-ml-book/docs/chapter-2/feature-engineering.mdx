@@ -1,0 +1,437 @@
+---
+sidebar_position: 3
+---
+
+# Feature Engineering
+
+Feature engineering is the art and science of transforming raw data into features that better represent the underlying problem to machine learning algorithms. It's often said that good feature engineering can make or break a machine learning model.
+
+## What is Feature Engineering?
+
+Feature engineering involves:
+- **Creating new features** from existing data
+- **Transforming existing features** to make them more useful
+- **Combining features** to capture interactions
+- **Selecting the most relevant features** for your model
+
+## Why Feature Engineering Matters
+
+Even the most sophisticated algorithms can't perform well with poor features. Feature engineering helps because:
+
+- **Better patterns**: Well-engineered features reveal hidden patterns in the data
+- **Improved accuracy**: Good features often lead to better model performance
+- **Reduced complexity**: Fewer, better features can simplify models
+- **Domain knowledge**: Incorporates human understanding into the model
+
+## Feature Engineering Techniques
+
+### 1. Numerical Feature Transformations
+
+#### Log Transformation
+Useful for right-skewed data (common with financial data, population, etc.)
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Create skewed data
+np.random.seed(42)
+income = np.random.exponential(scale=50000, size=1000)
+
+# Apply log transformation
+income_log = np.log1p(income)  # log(1+x) to handle zeros
+
+# Visualize the difference
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+sns.histplot(income, kde=True, ax=ax1, color='blue')
+ax1.set_title('Original Income Distribution')
+ax1.set_xlabel('Income')
+
+sns.histplot(income_log, kde=True, ax=ax2, color='green')
+ax2.set_title('Log-Transformed Income Distribution')
+ax2.set_xlabel('Log(Income + 1)')
+
+plt.tight_layout()
+plt.show()
+```
+
+#### Polynomial Features
+Create interaction terms and polynomial combinations
+
+```python
+from sklearn.preprocessing import PolynomialFeatures
+
+# Original features
+X = pd.DataFrame({
+    'height': [160, 170, 180, 190],
+    'weight': [50, 60, 70, 80]
+})
+
+# Create polynomial features
+poly = PolynomialFeatures(degree=2, include_bias=False)
+X_poly = poly.fit_transform(X)
+
+print("Original features:")
+print(X)
+print("\nPolynomial features:")
+print(pd.DataFrame(X_poly, columns=poly.get_feature_names_out()))
+```
+
+#### Binning (Discretization)
+Convert continuous variables into discrete bins
+
+```python
+from sklearn.preprocessing import KBinsDiscretizer
+
+# Age data
+ages = np.array([25, 30, 35, 40, 45, 50, 55, 60]).reshape(-1, 1)
+
+# Equal-width binning
+discretizer = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
+age_binned = discretizer.fit_transform(ages)
+
+print("Original ages:", ages.flatten())
+print("Binned ages:", age_binned.flatten())
+
+# Equal-frequency binning
+discretizer_quantile = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='quantile')
+age_quantile = discretizer_quantile.fit_transform(ages)
+print("Quantile binned ages:", age_quantile.flatten())
+```
+
+### 2. Categorical Feature Engineering
+
+#### One-Hot Encoding
+Convert categorical variables to binary features
+
+```python
+from sklearn.preprocessing import OneHotEncoder
+
+# Categorical data
+data = pd.DataFrame({
+    'color': ['red', 'blue', 'green', 'red', 'blue']
+})
+
+# Apply one-hot encoding
+encoder = OneHotEncoder(sparse_output=False, drop='first')  # Drop first to avoid multicollinearity
+encoded_features = encoder.fit_transform(data[['color']])
+
+print("Original data:")
+print(data)
+print("\nOne-hot encoded:")
+print(pd.DataFrame(encoded_features, columns=encoder.get_feature_names_out()))
+```
+
+#### Label Encoding
+Assign numerical labels to categories
+
+```python
+from sklearn.preprocessing import LabelEncoder
+
+# Ordinal data (has natural order)
+education_levels = ['High School', 'Bachelor', 'Master', 'PhD']
+
+# Create mapping
+label_encoder = LabelEncoder()
+education_encoded = label_encoder.fit_transform(education_levels)
+
+print("Original levels:", education_levels)
+print("Encoded levels:", education_encoded)
+print("Mapping:", dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))))
+```
+
+#### Target Encoding
+Encode categories based on target variable statistics
+
+```python
+# Create sample data
+data = pd.DataFrame({
+    'city': ['NYC', 'LA', 'Chicago', 'NYC', 'LA', 'Chicago'],
+    'target': [1, 0, 1, 1, 0, 1]
+})
+
+# Calculate target mean for each city
+city_target_mean = data.groupby('city')['target'].mean()
+
+# Apply target encoding
+data['city_encoded'] = data['city'].map(city_target_mean)
+
+print("City target encoding:")
+print(data[['city', 'target', 'city_encoded']])
+```
+
+### 3. Date and Time Feature Engineering
+
+```python
+# Date features
+dates = pd.date_range('2023-01-01', periods=100, freq='D')
+data = pd.DataFrame({'date': dates})
+
+# Extract date components
+data['year'] = data['date'].dt.year
+data['month'] = data['date'].dt.month
+data['day'] = data['date'].dt.day
+data['day_of_week'] = data['date'].dt.dayofweek
+data['day_of_year'] = data['date'].dt.dayofyear
+data['is_weekend'] = data['day_of_week'].isin([5, 6])
+data['quarter'] = data['date'].dt.quarter
+
+# Time-based features
+data['days_since_start'] = (data['date'] - data['date'].min()).dt.days
+
+print("Date features:")
+print(data.head())
+```
+
+### 4. Text Feature Engineering
+
+#### TF-IDF (Term Frequency-Inverse Document Frequency)
+```python
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Sample text data
+documents = [
+    "Machine learning is awesome",
+    "Deep learning uses neural networks",
+    "Natural language processing helps with text data",
+    "Computer vision processes images"
+]
+
+# Apply TF-IDF
+vectorizer = TfidfVectorizer(max_features=10, stop_words='english')
+tfidf_features = vectorizer.fit_transform(documents)
+
+print("TF-IDF feature names:")
+print(vectorizer.get_feature_names_out())
+print("\nTF-IDF matrix shape:", tfidf_features.shape)
+```
+
+#### Word Embeddings (using pre-trained models)
+```python
+# Using a simple word frequency approach
+from collections import Counter
+import re
+
+def extract_keywords(text, top_n=5):
+    # Simple keyword extraction
+    words = re.findall(r'\w+', text.lower())
+    word_counts = Counter(words)
+    return dict(word_counts.most_common(top_n))
+
+# Apply to documents
+keywords = [extract_keywords(doc) for doc in documents]
+print("Extracted keywords:")
+for i, keywords_dict in enumerate(keywords):
+    print(f"Document {i+1}: {keywords_dict}")
+```
+
+### 5. Feature Interactions and Combinations
+
+```python
+# Create interaction features
+data = pd.DataFrame({
+    'feature1': [1, 2, 3, 4],
+    'feature2': [10, 20, 30, 40],
+    'feature3': [0.1, 0.2, 0.3, 0.4]
+})
+
+# Manual feature combinations
+data['interaction_1_2'] = data['feature1'] * data['feature2']
+data['ratio_1_3'] = data['feature1'] / data['feature3']
+data['sum_all'] = data['feature1'] + data['feature2'] + data['feature3']
+
+print("Features with interactions:")
+print(data)
+```
+
+## Advanced Feature Engineering
+
+### 1. Principal Component Analysis (PCA)
+Reduce dimensionality while preserving variance
+
+```python
+from sklearn.decomposition import PCA
+from sklearn.datasets import make_classification
+
+# Create high-dimensional data
+X, y = make_classification(n_samples=1000, n_features=20, n_informative=5, random_state=42)
+
+# Apply PCA
+pca = PCA(n_components=5)
+X_pca = pca.fit_transform(X)
+
+print(f"Original shape: {X.shape}")
+print(f"PCA shape: {X_pca.shape}")
+print(f"Explained variance ratio: {pca.explained_variance_ratio_}")
+```
+
+### 2. Feature Selection
+Select the most important features
+
+```python
+from sklearn.feature_selection import SelectKBest, f_classif
+
+# Select top 5 features
+selector = SelectKBest(score_func=f_classif, k=5)
+X_selected = selector.fit_transform(X, y)
+
+# Get selected feature indices
+selected_features = selector.get_support(indices=True)
+print(f"Selected feature indices: {selected_features}")
+```
+
+### 3. Recursive Feature Elimination (RFE)
+Iteratively remove features
+
+```python
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
+
+# Use RFE with logistic regression
+estimator = LogisticRegression(max_iter=1000)
+selector = RFE(estimator, n_features_to_select=5, step=1)
+X_rfe = selector.fit_transform(X, y)
+
+print(f"RFE selected features: {selector.support_}")
+print(f"Feature ranking: {selector.ranking_}")
+```
+
+## Interactive Feature Engineering Exercise
+
+Let's work with a real dataset to practice feature engineering:
+
+```python
+# Load a sample dataset
+from sklearn.datasets import load_boston
+import pandas as pd
+
+boston = load_boston()
+df = pd.DataFrame(boston.data, columns=boston.feature_names)
+df['target'] = boston.target
+
+print("Original Boston dataset:")
+print(df.head())
+print(f"Shape: {df.shape}")
+
+# Feature engineering steps
+# 1. Create interaction features
+df['rm_lstat'] = df['RM'] * df['LSTAT']
+df['ptratio_tax'] = df['PTRATIO'] * df['TAX']
+
+# 2. Create polynomial features for important variables
+df['lstat_squared'] = df['LSTAT'] ** 2
+df['rm_cubed'] = df['RM'] ** 3
+
+# 3. Create categorical features
+df['high_crime'] = (df['CRIM'] > df['CRIM'].median()).astype(int)
+df['large_house'] = (df['RM'] > df['RM'].median()).astype(int)
+
+# 4. Normalize features
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+numerical_features = df.select_dtypes(include=[np.number]).columns.tolist()
+numerical_features.remove('target')  # Don't scale target
+
+df[numerical_features] = scaler.fit_transform(df[numerical_features])
+
+print("\nAfter feature engineering:")
+print(df.head())
+print(f"New shape: {df.shape}")
+```
+
+## Best Practices for Feature Engineering
+
+### 1. Understand Your Data
+```python
+# Always explore your data first
+print("Data types:")
+print(df.dtypes)
+
+print("\nBasic statistics:")
+print(df.describe())
+
+print("\nMissing values:")
+print(df.isnull().sum())
+```
+
+### 2. Use Domain Knowledge
+```python
+# Example: For housing data
+# - Total rooms per household = total_rooms / households
+# - Age of house = current_year - built_year
+# - Distance to city center might be important
+```
+
+### 3. Avoid Data Leakage
+```python
+# ❌ WRONG: Using target information in training features
+# df['target_mean_by_city'] = df.groupby('city')['target'].transform('mean')
+
+# ✅ CORRECT: Use only features available at prediction time
+```
+
+### 4. Validate Your Features
+```python
+# Check for multicollinearity
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+correlation_matrix = df.corr()
+plt.figure(figsize=(12, 10))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Feature Correlation Matrix')
+plt.show()
+```
+
+### 5. Document Your Process
+```python
+# Keep track of what you've done
+feature_engineering_log = []
+
+feature_engineering_log.append("Created interaction feature: rm_lstat = RM * LSTAT")
+feature_engineering_log.append("Added polynomial feature: lstat_squared = LSTAT^2")
+feature_engineering_log.append("Created categorical feature: high_crime from CRIM")
+
+# Save for reproducibility
+with open('feature_engineering_log.txt', 'w') as f:
+    for step in feature_engineering_log:
+        f.write(step + '\n')
+```
+
+## Common Pitfalls to Avoid
+
+1. **Overfitting with too many features**: More features aren't always better
+2. **Ignoring feature scaling**: Some algorithms are sensitive to feature scales
+3. **Creating redundant features**: Avoid features that provide the same information
+4. **Not handling missing values properly**: Decide how to handle missing data
+5. **Using future information**: Don't use information that wouldn't be available at prediction time
+
+## Feature Engineering Checklist
+
+Before training your model, ensure you've:
+
+- [ ] **Explored the data** thoroughly
+- [ ] **Handled missing values** appropriately
+- [ ] **Created meaningful interactions**
+- [ ] **Applied appropriate transformations** (log, polynomial, etc.)
+- [ ] **Encoded categorical variables** correctly
+- [ ] **Scaled features** if needed
+- [ ] **Removed highly correlated features**
+- [ ] **Validated feature quality** (no leakage, reasonable distributions)
+- [ ] **Documented the process** for reproducibility
+
+## Summary
+
+Feature engineering is both an art and a science that requires:
+
+- **Domain knowledge** to understand what features might be important
+- **Statistical understanding** to apply appropriate transformations
+- **Creativity** to think of new ways to represent the data
+- **Rigorous validation** to ensure features actually help the model
+
+Good feature engineering can dramatically improve model performance, often more than choosing a more sophisticated algorithm. Start simple, validate your features, and iterate based on model performance.
+
+Remember: **The best features are those that capture the true underlying patterns in your data while remaining interpretable and generalizable.**

@@ -1,0 +1,706 @@
+---
+sidebar_position: 3
+---
+
+# K-Means Clustering
+
+K-Means is one of the most popular and intuitive clustering algorithms. It partitions data into K distinct clusters based on similarity, making it an excellent starting point for understanding unsupervised learning.
+
+## What is K-Means Clustering?
+
+K-Means is a centroid-based algorithm that:
+1. **Partitions** data into K clusters
+2. **Minimizes** the sum of squared distances between points and their cluster centroids
+3. **Iteratively** refines cluster assignments and centroid positions
+
+### The K-Means Algorithm
+
+The algorithm follows these steps:
+1. **Initialize**: Randomly place K centroids in the data space
+2. **Assign**: Assign each data point to the nearest centroid
+3. **Update**: Recalculate centroids as the mean of assigned points
+4. **Repeat**: Continue until centroids stabilize
+
+### Mathematical Foundation
+
+The objective function that K-Means minimizes:
+```
+J = Σ(i=1 to K) Σ(x∈Ci) ||x - μi||²
+```
+
+Where:
+- **J**: Total within-cluster sum of squares
+- **K**: Number of clusters
+- **Ci**: Set of points in cluster i
+- **μi**: Centroid of cluster i
+- **x**: Data point
+
+## Basic K-Means Implementation
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+import seaborn as sns
+
+# Generate sample data
+np.random.seed(42)
+X, y_true = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
+
+# Visualize the true clusters
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.scatter(X[:, 0], X[:, 1], c=y_true, cmap='viridis', alpha=0.6)
+plt.title('True Clusters')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+
+# Apply K-Means
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+y_kmeans = kmeans.fit_predict(X)
+centers = kmeans.cluster_centers_
+
+# Plot K-Means results
+plt.subplot(1, 3, 2)
+plt.scatter(X[:, 0], X[:, 1], c=y_kmeans, cmap='viridis', alpha=0.6)
+plt.scatter(centers[:, 0], centers[:, 1], c='red', marker='x', s=200, linewidths=3, label='Centroids')
+plt.title('K-Means Clustering Results')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.legend()
+
+# Show assignment process
+plt.subplot(1, 3, 3)
+plt.scatter(X[:, 0], X[:, 1], c=y_kmeans, cmap='viridis', alpha=0.6)
+plt.scatter(centers[:, 0], centers[:, 1], c='red', marker='x', s=200, linewidths=3)
+plt.title('Centroids and Assignments')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+
+# Add lines showing assignments
+for i, center in enumerate(centers):
+    cluster_points = X[y_kmeans == i]
+    for point in cluster_points[:10]:  # Show lines for first 10 points per cluster
+        plt.plot([point[0], center[0]], [point[1], center[1]], 'r--', alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(f"Number of clusters found: {len(centers)}")
+print(f"Cluster centers:\n{centers}")
+```
+
+## Custom K-Means Implementation
+
+Let's build K-Means from scratch to understand the algorithm deeply:
+
+```python
+class CustomKMeans:
+    def __init__(self, k=3, max_iters=100, tol=1e-4):
+        self.k = k
+        self.max_iters = max_iters
+        self.tol = tol
+        self.centroids = None
+        self.labels_ = None
+        self.inertia_ = None
+
+    def _initialize_centroids(self, X):
+        """Randomly initialize cluster centroids"""
+        n_samples, n_features = X.shape
+        centroids = np.zeros((self.k, n_features))
+
+        for i in range(self.k):
+            centroid = X[np.random.choice(n_samples)]
+            centroids[i] = centroid
+
+        return centroids
+
+    def _compute_distances(self, X, centroids):
+        """Compute distance from each point to each centroid"""
+        distances = np.zeros((X.shape[0], self.k))
+        for i, centroid in enumerate(centroids):
+            distances[:, i] = np.linalg.norm(X - centroid, axis=1)
+        return distances
+
+    def _assign_clusters(self, distances):
+        """Assign each point to the nearest centroid"""
+        return np.argmin(distances, axis=1)
+
+    def _update_centroids(self, X, labels):
+        """Update centroids based on current assignments"""
+        centroids = np.zeros((self.k, X.shape[1]))
+        for i in range(self.k):
+            if np.sum(labels == i) > 0:
+                centroids[i] = X[labels == i].mean(axis=0)
+            else:
+                # If a cluster has no points, keep the old centroid
+                centroids[i] = self.centroids[i]
+        return centroids
+
+    def _compute_inertia(self, X, labels, centroids):
+        """Compute total within-cluster sum of squares"""
+        inertia = 0
+        for i in range(self.k):
+            cluster_points = X[labels == i]
+            if len(cluster_points) > 0:
+                inertia += np.sum((cluster_points - centroids[i]) ** 2)
+        return inertia
+
+    def fit(self, X):
+        """Fit the K-Means model"""
+        # Initialize centroids
+        self.centroids = self._initialize_centroids(X)
+
+        for iteration in range(self.max_iters):
+            # Store old centroids to check convergence
+            old_centroids = self.centroids.copy()
+
+            # Compute distances and assign clusters
+            distances = self._compute_distances(X, self.centroids)
+            self.labels_ = self._assign_clusters(distances)
+
+            # Update centroids
+            self.centroids = self._update_centroids(X, self.labels_)
+
+            # Check for convergence
+            if np.all(np.abs(old_centroids - self.centroids) < self.tol):
+                print(f"Converged after {iteration + 1} iterations")
+                break
+
+            # Compute inertia
+            self.inertia_ = self._compute_inertia(X, self.labels_, self.centroids)
+
+        return self
+
+    def predict(self, X):
+        """Predict cluster labels for new data"""
+        distances = self._compute_distances(X, self.centroids)
+        return self._assign_clusters(distances)
+
+    def fit_predict(self, X):
+        """Fit the model and return cluster labels"""
+        return self.fit(X).labels_
+
+# Test custom implementation
+custom_kmeans = CustomKMeans(k=4, max_iters=100, tol=1e-4)
+custom_labels = custom_kmeans.fit_predict(X)
+
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.scatter(X[:, 0], X[:, 1], c=custom_labels, cmap='viridis', alpha=0.6)
+plt.scatter(custom_kmeans.centroids[:, 0], custom_kmeans.centroids[:, 1],
+           c='red', marker='x', s=200, linewidths=3)
+plt.title('Custom K-Means Implementation')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+
+plt.subplot(1, 2, 2)
+plt.plot(range(1, len(custom_kmeans.inertia_) + 1), custom_kmeans.inertia_, 'bo-')
+plt.title('Convergence: Inertia Over Iterations')
+plt.xlabel('Iteration')
+plt.ylabel('Total Within-Cluster Sum of Squares')
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(f"Final inertia: {custom_kmeans.inertia_[-1]:.2f}")
+print(f"Number of iterations: {len(custom_kmeans.inertia_)}")
+```
+
+## Choosing the Right K
+
+### The Elbow Method
+
+```python
+# Elbow method to find optimal K
+k_range = range(1, 11)
+inertias = []
+
+for k in k_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    kmeans.fit(X)
+    inertias.append(kmeans.inertia_)
+
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.plot(k_range, inertias, 'bo-')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('Inertia (WCSS)')
+plt.title('Elbow Method for Optimal K')
+plt.grid(True, alpha=0.3)
+
+# Add annotations for potential elbow points
+plt.annotate('Potential elbow\n(K=4)', xy=(4, inertias[3]), xytext=(6, inertias[1]),
+            arrowprops=dict(arrowstyle='->', color='red'), fontsize=10)
+
+plt.subplot(1, 2, 2)
+# Calculate rate of decrease
+rate_of_decrease = [inertias[i] - inertias[i+1] for i in range(len(inertias)-1)]
+plt.plot(k_range[:-1], rate_of_decrease, 'ro-')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('Rate of Decrease in Inertia')
+plt.title('Rate of Inertia Decrease')
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print("Inertia values for different K:")
+for k, inertia in zip(k_range, inertias):
+    print(f"  K={k}: {inertia:.2f}")
+```
+
+### Silhouette Analysis
+
+```python
+from sklearn.metrics import silhouette_samples, silhouette_score
+
+# Calculate silhouette scores for different K values
+k_range = range(2, 11)
+silhouette_avg = []
+silhouette_max = 0
+best_k = 2
+
+for k in k_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    cluster_labels = kmeans.fit_predict(X)
+    silhouette_avg_score = silhouette_score(X, cluster_labels)
+    silhouette_avg.append(silhouette_avg_score)
+
+    if silhouette_avg_score > silhouette_max:
+        silhouette_max = silhouette_avg_score
+        best_k = k
+
+print(f"Best K based on silhouette score: {best_k}")
+print(f"Maximum silhouette score: {silhouette_max:.3f}")
+
+# Plot silhouette analysis
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.plot(k_range, silhouette_avg, 'bo-')
+plt.axvline(x=best_k, color='red', linestyle='--', alpha=0.7, label=f'Best K={best_k}')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('Average Silhouette Score')
+plt.title('Silhouette Analysis for Optimal K')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# Detailed silhouette plot for best K
+plt.subplot(1, 3, 2)
+kmeans_best = KMeans(n_clusters=best_k, random_state=42, n_init=10)
+cluster_labels = kmeans_best.fit_predict(X)
+silhouette_vals = silhouette_samples(X, cluster_labels)
+
+y_lower = 10
+for i in range(best_k):
+    # Aggregate the silhouette scores for samples belonging to cluster i
+    ith_cluster_silhouette_values = silhouette_vals[cluster_labels == i]
+    ith_cluster_silhouette_values.sort()
+
+    size_cluster_i = ith_cluster_silhouette_values.shape[0]
+    y_upper = y_lower + size_cluster_i
+
+    color = plt.cm.viridis(i / best_k)
+    plt.fill_betweenx(np.arange(y_lower, y_upper),
+                      0, ith_cluster_silhouette_values,
+                      facecolor=color, edgecolor=color, alpha=0.7)
+
+    # Label the silhouette plots with their cluster numbers at the middle
+    plt.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+    # Compute the new y_lower for next plot
+    y_lower = y_upper + 10  # 10 for the 0 samples
+
+plt.xlabel('Silhouette coefficient values')
+plt.ylabel('Cluster label')
+plt.title('Silhouette Plot for K-Means Clustering')
+plt.axvline(x=silhouette_max, color="red", linestyle="--")
+plt.yticks([])
+plt.xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
+
+# Show clustering result for best K
+plt.subplot(1, 3, 3)
+plt.scatter(X[:, 0], X[:, 1], c=cluster_labels, cmap='viridis', alpha=0.6)
+plt.title(f'K-Means Clustering (K={best_k})')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Advanced K-Means Techniques
+
+### K-Means++ Initialization
+
+```python
+# Compare random initialization vs K-Means++
+from sklearn.cluster import KMeans
+
+# Random initialization
+kmeans_random = KMeans(n_clusters=4, init='random', n_init=1, random_state=42)
+kmeans_random.fit(X)
+
+# K-Means++ initialization
+kmeans_plus = KMeans(n_clusters=4, init='k-means++', n_init=1, random_state=42)
+kmeans_plus.fit(X)
+
+# Compare results
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.scatter(X[:, 0], X[:, 1], c=kmeans_random.labels_, cmap='viridis', alpha=0.6)
+plt.scatter(kmeans_random.cluster_centers_[:, 0], kmeans_random.cluster_centers_[:, 1],
+           c='red', marker='x', s=200, linewidths=3)
+plt.title(f'Random Initialization\nInertia: {kmeans_random.inertia_:.2f}')
+
+plt.subplot(1, 3, 2)
+plt.scatter(X[:, 0], X[:, 1], c=kmeans_plus.labels_, cmap='viridis', alpha=0.6)
+plt.scatter(kmeans_plus.cluster_centers_[:, 0], kmeans_plus.cluster_centers_[:, 1],
+           c='red', marker='x', s=200, linewidths=3)
+plt.title(f'K-Means++ Initialization\nInertia: {kmeans_plus.inertia_:.2f}')
+
+plt.subplot(1, 3, 3)
+# Show initialization process
+plt.scatter(X[:, 0], X[:, 1], alpha=0.3, c='gray')
+# Plot first centroid (randomly chosen)
+first_centroid = kmeans_plus.cluster_centers_[0]
+plt.scatter(first_centroid[0], first_centroid[1], c='blue', marker='o', s=300, linewidths=3, label='Centroid 1')
+plt.title('K-Means++ Initialization Strategy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+print("Initialization comparison:")
+print(f"Random: {kmeans_random.inertia_:.2f}")
+print(f"K-Means++: {kmeans_plus.inertia_:.2f}")
+print(f"Improvement: {(kmeans_random.inertia_ - kmeans_plus.inertia_):.2f}")
+```
+
+### Mini-Batch K-Means
+
+For large datasets, Mini-Batch K-Means can be more efficient:
+
+```python
+from sklearn.cluster import MiniBatchKMeans
+
+# Create larger dataset for demonstration
+X_large, _ = make_blobs(n_samples=10000, centers=5, cluster_std=1.0, random_state=42)
+
+# Standard K-Means
+import time
+start_time = time.time()
+kmeans_standard = KMeans(n_clusters=5, random_state=42, n_init=10)
+kmeans_standard.fit(X_large)
+standard_time = time.time() - start_time
+
+# Mini-Batch K-Means
+start_time = time.time()
+kmeans_mini = MiniBatchKMeans(n_clusters=5, random_state=42, batch_size=100)
+kmeans_mini.fit(X_large)
+mini_time = time.time() - start_time
+
+print(f"Standard K-Means: {standard_time:.3f} seconds, Inertia: {kmeans_standard.inertia_:.2f}")
+print(f"Mini-Batch K-Means: {mini_time:.3f} seconds, Inertia: {kmeans_mini.inertia_:.2f}")
+
+# Visualize comparison
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.scatter(X_large[:1000, 0], X_large[:1000, 1], c=kmeans_standard.labels_[:1000], cmap='viridis', alpha=0.5, s=10)
+plt.scatter(kmeans_standard.cluster_centers_[:, 0], kmeans_standard.cluster_centers_[:, 1],
+           c='red', marker='x', s=200, linewidths=3)
+plt.title('Standard K-Means')
+
+plt.subplot(1, 3, 2)
+plt.scatter(X_large[:1000, 0], X_large[:1000, 1], c=kmeans_mini.labels_[:1000], cmap='viridis', alpha=0.5, s=10)
+plt.scatter(kmeans_mini.cluster_centers_[:, 0], kmeans_mini.cluster_centers_[:, 1],
+           c='red', marker='x', s=200, linewidths=3)
+plt.title('Mini-Batch K-Means')
+
+plt.subplot(1, 3, 3)
+plt.bar(['Standard', 'Mini-Batch'], [standard_time, mini_time])
+plt.ylabel('Time (seconds)')
+plt.title('Performance Comparison')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Real-World Applications
+
+### Customer Segmentation
+
+```python
+# Simulate customer data
+np.random.seed(123)
+n_customers = 1000
+
+# Customer features
+age = np.random.normal(35, 12, n_customers)
+income = np.random.normal(50000, 25000, n_customers)
+spending_score = np.random.normal(50, 25, n_customers)
+loyalty_years = np.random.exponential(3, n_customers)
+
+# Create customer segments
+X_customers = np.column_stack([age, income, spending_score, loyalty_years])
+
+# Normalize features
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+X_customers_scaled = scaler.fit_transform(X_customers)
+
+# Apply K-Means
+kmeans_customers = KMeans(n_clusters=4, random_state=42, n_init=10)
+customer_segments = kmeans_customers.fit_predict(X_customers_scaled)
+
+# Analyze segments
+customer_data = pd.DataFrame({
+    'Age': age,
+    'Income': income,
+    'Spending Score': spending_score,
+    'Loyalty Years': loyalty_years,
+    'Segment': customer_segments
+})
+
+plt.figure(figsize=(15, 10))
+
+# Feature analysis by segment
+features = ['Age', 'Income', 'Spending Score', 'Loyalty Years']
+for i, feature in enumerate(features):
+    plt.subplot(2, 2, i+1)
+    for segment in range(4):
+        segment_data = customer_data[customer_data['Segment'] == segment][feature]
+        plt.hist(segment_data, alpha=0.6, label=f'Segment {segment}', bins=20)
+    plt.xlabel(feature)
+    plt.ylabel('Frequency')
+    plt.title(f'{feature} by Customer Segment')
+    plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# Segment profiles
+print("Customer Segment Profiles:")
+print("=" * 50)
+for segment in range(4):
+    segment_data = customer_data[customer_data['Segment'] == segment]
+    print(f"\nSegment {segment}:")
+    print(f"  Size: {len(segment_data)} customers ({len(segment_data)/len(customer_data)*100:.1f}%)")
+    print(f"  Avg Age: {segment_data['Age'].mean():.1f} years")
+    print(f"  Avg Income: ${segment_data['Income'].mean():,.0f}")
+    print(f"  Avg Spending Score: {segment_data['Spending Score'].mean():.1f}")
+    print(f"  Avg Loyalty Years: {segment_data['Loyalty Years'].mean():.1f}")
+```
+
+### Image Compression
+
+```python
+from sklearn.cluster import KMeans
+from sklearn.datasets import load_sample_image
+
+# Load sample image
+china = load_sample_image("china.jpg")
+# Convert to floats instead of the default 8 bits integer coding.
+# Dividing by 255 is important so that plt.imshow behaves works well on float data (need to be in the range [0-1])
+china = np.array(china, dtype=np.float64) / 255
+
+# Load Image and transform to a 2D numpy array.
+w, h, d = original_shape = tuple(china.shape)
+assert d == 3
+image_array = np.reshape(china, (w * h, d))
+
+print(f"Original image shape: {original_shape}")
+print(f"Flattened array shape: {image_array.shape}")
+
+# Apply K-Means to compress image
+n_colors = 64
+kmeans = KMeans(n_clusters=n_colors, random_state=42, n_init=10).fit(image_array)
+
+# Recreate the (compressed) image from the code book & labels
+labels = kmeans.predict(image_array)
+codebook = kmeans.cluster_centers_
+
+def recreate_image(codebook, labels, w, h):
+    """Recreate the (compressed) image from the code book & labels"""
+    d = codebook.shape[1]
+    image = np.zeros((w, h, d))
+    label_idx = 0
+    for i in range(w):
+        for j in range(h):
+            image[i][j] = codebook[labels[label_idx]]
+            label_idx += 1
+    return image
+
+# Display results
+plt.figure(figsize=(20, 8))
+
+plt.subplot(2, 3, 1)
+plt.imshow(china)
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(2, 3, 2)
+compressed_image = recreate_image(codebook, labels, w, h)
+plt.imshow(compressed_image)
+plt.title(f'Compressed Image (K={n_colors})')
+plt.axis('off')
+
+# Show different compression levels
+compression_levels = [8, 16, 32, 64, 128]
+for i, n_colors in enumerate(compression_levels):
+    kmeans = KMeans(n_clusters=n_colors, random_state=42, n_init=10).fit(image_array)
+    labels = kmeans.predict(image_array)
+    codebook = kmeans.cluster_centers_
+    compressed = recreate_image(codebook, labels, w, h)
+
+    plt.subplot(2, 3, i+3)
+    plt.imshow(compressed)
+    plt.title(f'K={n_colors}')
+    plt.axis('off')
+
+plt.tight_layout()
+plt.show()
+
+print("Image Compression Results:")
+print(f"Original: {original_shape[0]}x{original_shape[1]}x{original_shape[2]} = {np.prod(original_shape)} values")
+for n_colors in [8, 16, 32, 64, 128]:
+    compressed_size = n_colors * 3 + w * h  # codebook + labels
+    compression_ratio = np.prod(original_shape) / compressed_size
+    print(f"K={n_colors}: Compression ratio = {compression_ratio:.1f}x")
+```
+
+## Common Pitfalls and Solutions
+
+### 1. Choosing Wrong K
+
+**Problem**: Too many or too few clusters
+**Solution**: Use elbow method, silhouette analysis, or domain knowledge
+
+```python
+# Demonstrate wrong K selection
+plt.figure(figsize=(15, 5))
+
+wrong_ks = [2, 8, 15]
+for i, k in enumerate(wrong_ks):
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    labels = kmeans.fit_predict(X)
+
+    plt.subplot(1, 3, i+1)
+    plt.scatter(X[:, 0], X[:, 1], c=labels, cmap='viridis', alpha=0.6)
+    plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1],
+               c='red', marker='x', s=200, linewidths=3)
+    plt.title(f'K={k} - {"Too Few" if k < 4 else "Too Many" if k > 4 else "Just Right"}')
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+
+plt.tight_layout()
+plt.show()
+```
+
+### 2. Non-Spherical Clusters
+
+**Problem**: K-Means assumes spherical clusters
+**Solution**: Use other algorithms like DBSCAN or Gaussian Mixture Models
+
+```python
+# Create non-spherical clusters
+from sklearn.datasets import make_moons, make_circles
+
+# Moon-shaped clusters
+X_moons, y_moons = make_moons(n_samples=200, noise=0.1, random_state=42)
+
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.scatter(X_moons[:, 0], X_moons[:, 1], c=y_moons, cmap='viridis', alpha=0.7)
+plt.title('True Moon Clusters')
+
+# K-Means on moons
+kmeans_moons = KMeans(n_clusters=2, random_state=42, n_init=10)
+labels_moons = kmeans_moons.fit_predict(X_moons)
+
+plt.subplot(1, 3, 2)
+plt.scatter(X_moons[:, 0], X_moons[:, 1], c=labels_moons, cmap='viridis', alpha=0.7)
+plt.scatter(kmeans_moons.cluster_centers_[:, 0], kmeans_moons.cluster_centers_[:, 1],
+           c='red', marker='x', s=200, linewidths=3)
+plt.title('K-Means on Moon Data')
+
+# Circle clusters
+X_circles, y_circles = make_circles(n_samples=200, noise=0.05, factor=0.5, random_state=42)
+
+plt.subplot(1, 3, 3)
+kmeans_circles = KMeans(n_clusters=2, random_state=42, n_init=10)
+labels_circles = kmeans_circles.fit_predict(X_circles)
+
+plt.scatter(X_circles[:, 0], X_circles[:, 1], c=labels_circles, cmap='viridis', alpha=0.7)
+plt.scatter(kmeans_circles.cluster_centers_[:, 0], kmeans_circles.cluster_centers_[:, 1],
+           c='red', marker='x', s=200, linewidths=3)
+plt.title('K-Means on Circle Data')
+
+plt.tight_layout()
+plt.show()
+```
+
+### 3. Feature Scaling Issues
+
+**Problem**: Features with different scales affect clustering
+**Solution**: Always scale features when they have different units
+
+```python
+# Demonstrate scaling issues
+# Create data with different scales
+X_scale = np.column_stack([
+    np.random.normal(0, 1, 100),  # Feature 1: scale ~1
+    np.random.normal(0, 100, 100)  # Feature 2: scale ~100
+])
+
+plt.figure(figsize=(15, 5))
+
+# Without scaling
+plt.subplot(1, 3, 1)
+kmeans_unscaled = KMeans(n_clusters=3, random_state=42, n_init=10)
+labels_unscaled = kmeans_unscaled.fit_predict(X_scale)
+plt.scatter(X_scale[:, 0], X_scale[:, 1], c=labels_unscaled, cmap='viridis', alpha=0.7)
+plt.title('Without Scaling')
+
+# With scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_scale)
+
+plt.subplot(1, 3, 2)
+kmeans_scaled = KMeans(n_clusters=3, random_state=42, n_init=10)
+labels_scaled = kmeans_scaled.fit_predict(X_scaled)
+plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=labels_scaled, cmap='viridis', alpha=0.7)
+plt.title('With Scaling')
+
+# Show the difference
+plt.subplot(1, 3, 3)
+plt.scatter(X_scale[:, 0], X_scale[:, 1], c=labels_unscaled, cmap='viridis', alpha=0.7, label='Unscaled')
+plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=labels_scaled, cmap='coolwarm', alpha=0.7, marker='x', label='Scaled')
+plt.title('Comparison')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+## Key Takeaways
+
+1. **K-Means is simple but powerful**: Easy to understand and implement
+2. **Initialization matters**: Use K-Means++ for better results
+3. **Choose K carefully**: Use elbow method, silhouette analysis, or domain knowledge
+4. **Scale your features**: Always normalize when features have different units
+5. **Understand assumptions**: K-Means works best with spherical, well-separated clusters
+6. **Evaluate results**: Use multiple metrics and visualizations to assess clustering quality
+7. **Consider alternatives**: For non-spherical clusters, consider DBSCAN, hierarchical clustering, or Gaussian Mixture Models
+
+K-Means is an excellent starting point for clustering tasks and provides a solid foundation for understanding more advanced unsupervised learning techniques.
